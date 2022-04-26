@@ -20,8 +20,8 @@
     <distributionManagement>
         <repository>
             <id>github</id>
-            <name>bliblidotcom</name>
-            <url>https://maven.pkg.github.com/bliblidotcom/selenium-har-util/</url>
+            <name>blibli-badak</name>
+            <url>https://maven.pkg.github.com/blibli-badak/selenium-har-util/</url>
         </repository>
     </distributionManagement>
 
