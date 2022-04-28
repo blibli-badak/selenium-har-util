@@ -12,6 +12,15 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.Augmenter;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.RemoteWebDriver;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 
 /**
@@ -24,7 +33,8 @@ public class AppTest {
 
     private WebDriver driver;
     private NetworkListener networkListener;
-
+    ChromeOptions options;
+    DesiredCapabilities capabilities;
     @BeforeAll
     static void setupClass() {
 
@@ -32,10 +42,22 @@ public class AppTest {
 
     @BeforeEach
     public void setup() {
-
+//        options = new ChromeOptions();
+//        options.addArguments("--no-sandbox");
+//        options.addArguments("--disable-dev-shm-usage");
+        Map<String, Object> prefs = new HashMap<String, Object>();
+        prefs.put("enableVNC", true);
+        prefs.put("enableVideo", false);
+        prefs.put("sessionTimeout", "120s");
+        capabilities = new DesiredCapabilities();
+        capabilities.setCapability("browserName", "chrome");
+        capabilities.setCapability("browserVersion", "96.0");
+        capabilities.setCapability("selenoid:options", prefs);
+//        options.merge(capabilities);
+//        options.addArguments("--headless");
     }
 
-    @Test
+//    @Test
     public void shouldAnswerWithTrue() {
 //        NetworkInterceptor networkInterceptor = new NetworkInterceptor(driver, new HttpHandler() {
 //            @Override
@@ -47,15 +69,12 @@ public class AppTest {
 //            }
 //        });
         WebDriverManager.chromedriver().setup();
-        ChromeOptions options = new ChromeOptions();
-        options.addArguments("--no-sandbox");
-        options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("--headless");
-        driver = new ChromeDriver(options);
+
+        driver = new ChromeDriver();
         driver.manage().window().maximize();
         networkListener = new NetworkListener(driver, "har.har");
-
         networkListener.start();
+
 //        driver.get("http://gosoft.web.id/example/");
         driver.get("https://en.wiktionary.org/wiki/Wiktionary:Main_Page");
         WebElement element = driver.findElement(By.id("searchInput"));
@@ -71,8 +90,17 @@ public class AppTest {
     }
 
     @Test
-    public void tryUsingRemoteAccess() {
+    public void tryUsingRemoteAccess() throws MalformedURLException {
+        // Todo : Check Selenoid implementation https://github.com/SeleniumHQ/selenium/issues/9803#issuecomment-1015300383
+        String seleniumUrl = Optional.ofNullable(System.getenv("SE_REMOTE_URL")).orElse("http://qa-selenoid-metrics-2.infra.lokal:4444/wd/hub/");
+//        String seleniumUrl = "http://192.168.56.107:4444/wd/hub/";
+        System.out.println("Running on Remote " + seleniumUrl);
+        driver = new RemoteWebDriver(new URL(seleniumUrl), capabilities);
+        // Todo : change to this one https://github.com/aerokube/chrome-developer-tools-protocol-java-example/blob/master/src/test/java/com/aerokube/selenoid/ChromeDevtoolsTest.java
+        networkListener = new NetworkListener(driver, "har.har");
+        driver.get("https://en.wiktionary.org/wiki/Wiktionary:Main_Page");
         networkListener.start();
+//        driver = networkListener.getDriver();
         driver.get("https://en.wiktionary.org/wiki/Wiktionary:Main_Page");
         WebElement element = driver.findElement(By.id("searchInput"));
         element.sendKeys("Kiwi/n");

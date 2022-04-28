@@ -4,19 +4,22 @@ import com.blibli.oss.qa.util.model.HarModel;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.sstoehr.harreader.model.*;
+import org.openqa.selenium.Capabilities;
+import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.devtools.DevTools;
-import org.openqa.selenium.devtools.HasDevTools;
-import org.openqa.selenium.devtools.NetworkInterceptor;
-import org.openqa.selenium.remote.http.Filter;
-import org.openqa.selenium.remote.http.HttpRequest;
-import org.openqa.selenium.remote.http.HttpResponse;
+import org.openqa.selenium.devtools.*;
+import org.openqa.selenium.devtools.noop.NoOpCdpInfo;
+import org.openqa.selenium.remote.Augmenter;
+import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.remote.http.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.*;
 
@@ -62,18 +65,19 @@ public class NetworkListener {
         this.driver = driver;
     }
 
-    public void start() {
-//        devTools.createSession();
-//        //add listener to intercept request and continue
-//        devTools.send(Network.enable(Optional.empty(), Optional.empty(), Optional.empty()));
-//
-//        devTools.addListener(Network.requestWillBeSent(), requestSent -> {
-//            requestWillBeSentMap.put(requestSent.getRequestId().toString(), requestSent);
-//            JSONUtil.appendJson(requestSent,requestFile);
-//        });
 
+    public void start() {
         // main listener to intercept response and continue
-        this.devTools = ((HasDevTools)driver).getDevTools();
+        try {
+            if(driver instanceof RemoteWebDriver) {
+                this.devTools = getCdpUsingCustomurl();
+            }else {
+                this.devTools = ((HasDevTools)driver).getDevTools();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        devTools.createSession();
         Filter reportStatusCodes = next -> req -> {
             HttpResponse res = next.execute(req);
 //            responses.add(res);
@@ -82,6 +86,52 @@ public class NetworkListener {
             return res;
         };
         NetworkInterceptor networkInterceptor = new NetworkInterceptor(driver, reportStatusCodes);
+    }
+
+
+    public DevTools getSelenoidCdp() throws URISyntaxException {
+        String sessionId =  ((RemoteWebDriver) driver).getSessionId().toString();
+        String debuggerUrl = String.format("ws://qa-selenoid-metrics-2.infra.lokal:4444/devtools/%s/page", sessionId);
+        URI uri = new URI(debuggerUrl);
+
+        HttpClient.Factory clientFactory = HttpClient.Factory.createDefault();
+        Capabilities originalCapabilities = ((RemoteWebDriver) driver).getCapabilities();
+        Optional<Connection> connection = Optional.of(new Connection(
+                clientFactory.createClient(ClientConfig.defaultConfig().baseUri(uri)),
+                uri.toString()));
+        CdpInfo cdpInfo = (new CdpVersionFinder()).match(originalCapabilities.getBrowserVersion()).orElseGet(NoOpCdpInfo::new);
+//        Optional devTools = connection.map();
+        Optional<DevTools> devTools = connection.map((conn) -> {
+            Objects.requireNonNull(cdpInfo);
+            return new DevTools(cdpInfo::getDomains, conn);
+        });
+        return devTools.get();
+    }
+
+    public DevTools getCdpUsingCustomurl(){
+    // Before proceeding, reach into the driver and manipulate the capabilities to
+    // include the se:cdp and se:cdpVersion keys.
+        try {
+            Field capabilitiesField = RemoteWebDriver.class.getDeclaredField("capabilities");
+            capabilitiesField.setAccessible(true);
+            String sessionId =  ((RemoteWebDriver) driver).getSessionId().toString();
+            String devtoolsUrl = String.format("ws://qa-selenoid-metrics-2.infra.lokal:4444/devtools/%s/page", sessionId);
+
+            MutableCapabilities mutableCapabilities = (MutableCapabilities) capabilitiesField.get(driver);
+            mutableCapabilities.setCapability("se:cdp", devtoolsUrl);
+            mutableCapabilities.setCapability("se:cdpVersion", mutableCapabilities.getBrowserVersion());
+        } catch (Exception e) {
+            System.err.println("Failed to spoof RemoteWebDriver capabilities :sadpanda:");
+        }
+
+        // Proceed to "augment" the driver and get a dev tools client ...
+        RemoteWebDriver augmenteDriver = (RemoteWebDriver) new Augmenter().augment(driver);
+        DevTools devTools = ((HasDevTools) augmenteDriver).getDevTools();
+        this.driver = augmenteDriver;
+        return devTools;
+    }
+    public WebDriver getDriver() {
+        return driver;
     }
 
     public void createHarFile() {
