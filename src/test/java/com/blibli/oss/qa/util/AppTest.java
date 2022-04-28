@@ -93,7 +93,7 @@ public class AppTest {
     @Test
     public void tryUsingRemoteAccess() throws MalformedURLException {
         // Todo : Check Selenoid implementation https://github.com/SeleniumHQ/selenium/issues/9803#issuecomment-1015300383
-        String seleniumUrl = Optional.ofNullable(System.getenv("SE_REMOTE_URL")).orElse("http://qa-selenoid-metrics-2.infra.lokal:4444/wd/hub/");
+        String seleniumUrl = Optional.ofNullable(System.getenv("SE_REMOTE_URL")).orElse("http://localhost:4444/wd/hub/");
 //        String seleniumUrl = "http://192.168.56.107:4444/wd/hub/";
         System.out.println("Running on Remote " + seleniumUrl);
         driver = new RemoteWebDriver(new URL(seleniumUrl), capabilities);
