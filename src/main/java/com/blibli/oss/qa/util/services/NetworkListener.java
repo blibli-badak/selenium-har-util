@@ -24,15 +24,16 @@ import java.nio.file.Files;
 import java.util.*;
 
 public class NetworkListener {
-    WebDriver driver;
-    DevTools devTools;
-    ArrayList<HttpRequest> requests = new ArrayList<>();
-    ArrayList<HttpResponse> responses = new ArrayList<>();
+    private WebDriver driver;
+    private String baseRemoteUrl;
+    private DevTools devTools;
+    private ArrayList<HttpRequest> requests = new ArrayList<>();
+    private ArrayList<HttpResponse> responses = new ArrayList<>();
 
-    HashMap<Long , HarModel> harModelHashMap = new HashMap<>();
+    private HashMap<Long , HarModel> harModelHashMap = new HashMap<>();
 
     static final String targetPathFile = System.getProperty("user.dir") + "/target/";
-    String harFile = "";
+    private String harFile = "";
 
     private HarCreatorBrowser harCreatorBrowser;
 
@@ -51,6 +52,25 @@ public class NetworkListener {
         }
         createHarBrowser();
     }
+
+    /**
+     * Generate new network listener object
+     * @param driver chrome driver that you are using
+     * @param harFileName file will be stored under target folder
+     * @param baseRemoteUrl Base Selenoid URl that you are using
+     */
+    public NetworkListener(WebDriver driver , String harFileName , String baseRemoteUrl) {
+        this.driver = driver;
+        this.harFile = harFileName;
+        this.baseRemoteUrl = baseRemoteUrl;
+        try {
+            Files.delete(java.nio.file.Paths.get(harFile));
+        } catch (IOException e) {
+            //ignored
+        }
+        createHarBrowser();
+    }
+
 
     /**
      * Generate new network listener object
@@ -86,26 +106,6 @@ public class NetworkListener {
             return res;
         };
         NetworkInterceptor networkInterceptor = new NetworkInterceptor(driver, reportStatusCodes);
-    }
-
-
-    public DevTools getSelenoidCdp() throws URISyntaxException {
-        String sessionId =  ((RemoteWebDriver) driver).getSessionId().toString();
-        String debuggerUrl = String.format("ws://qa-selenoid-metrics-2.infra.lokal:4444/devtools/%s/page", sessionId);
-        URI uri = new URI(debuggerUrl);
-
-        HttpClient.Factory clientFactory = HttpClient.Factory.createDefault();
-        Capabilities originalCapabilities = ((RemoteWebDriver) driver).getCapabilities();
-        Optional<Connection> connection = Optional.of(new Connection(
-                clientFactory.createClient(ClientConfig.defaultConfig().baseUri(uri)),
-                uri.toString()));
-        CdpInfo cdpInfo = (new CdpVersionFinder()).match(originalCapabilities.getBrowserVersion()).orElseGet(NoOpCdpInfo::new);
-//        Optional devTools = connection.map();
-        Optional<DevTools> devTools = connection.map((conn) -> {
-            Objects.requireNonNull(cdpInfo);
-            return new DevTools(cdpInfo::getDomains, conn);
-        });
-        return devTools.get();
     }
 
     public DevTools getCdpUsingCustomurl(){

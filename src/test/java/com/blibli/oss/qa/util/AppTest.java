@@ -43,9 +43,7 @@ public class AppTest {
 
     @BeforeEach
     public void setup() {
-//        options = new ChromeOptions();
-//        options.addArguments("--no-sandbox");
-//        options.addArguments("--disable-dev-shm-usage");
+
         Map<String, Object> prefs = new HashMap<String, Object>();
         prefs.put("enableVNC", true);
         prefs.put("enableVideo", false);
@@ -55,28 +53,21 @@ public class AppTest {
         capabilities.setCapability("browserVersion", "96.0");
         capabilities.setCapability("selenoid:options", prefs);
 //        options.merge(capabilities);
-//        options.addArguments("--headless");
+
     }
 
-//    @Test
-    public void shouldAnswerWithTrue() {
-//        NetworkInterceptor networkInterceptor = new NetworkInterceptor(driver, new HttpHandler() {
-//            @Override
-//            public HttpResponse execute(HttpRequest req) throws UncheckedIOException {
-//                System.out.println(req.getMethod().name());
-//                HttpResponse hr = new HttpResponse();
-//                hr.setStatus(200);
-//                return hr;
-//            }
-//        });
+    @Test
+    public void testWithLocalDriver() {
+        options = new ChromeOptions();
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+        options.addArguments("--headless");
         WebDriverManager.chromedriver().setup();
 
-        driver = new ChromeDriver();
+        driver = new ChromeDriver(options);
         driver.manage().window().maximize();
         networkListener = new NetworkListener(driver, "har.har");
         networkListener.start();
-
-//        driver.get("http://gosoft.web.id/example/");
         driver.get("https://en.wiktionary.org/wiki/Wiktionary:Main_Page");
         WebElement element = driver.findElement(By.id("searchInput"));
         element.sendKeys("Kiwi/n");
@@ -98,7 +89,7 @@ public class AppTest {
         System.out.println("Running on Remote " + seleniumUrl);
         driver = new RemoteWebDriver(new URL(seleniumUrl), capabilities);
         // Todo : change to this one https://github.com/aerokube/chrome-developer-tools-protocol-java-example/blob/master/src/test/java/com/aerokube/selenoid/ChromeDevtoolsTest.java
-        networkListener = new NetworkListener(driver, "har.har");
+        networkListener = new NetworkListener(driver, "har.har",Optional.ofNullable(System.getenv("SE_BASE_URL")).orElse("localhost:4444"));
         driver.get("https://en.wiktionary.org/wiki/Wiktionary:Main_Page");
         networkListener.start();
 //        driver = networkListener.getDriver();
