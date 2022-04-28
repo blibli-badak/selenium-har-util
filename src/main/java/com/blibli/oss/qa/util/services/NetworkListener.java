@@ -115,7 +115,7 @@ public class NetworkListener {
             Field capabilitiesField = RemoteWebDriver.class.getDeclaredField("capabilities");
             capabilitiesField.setAccessible(true);
             String sessionId =  ((RemoteWebDriver) driver).getSessionId().toString();
-            String devtoolsUrl = String.format("ws://qa-selenoid-metrics-2.infra.lokal:4444/devtools/%s/page", sessionId);
+            String devtoolsUrl = String.format("ws://%s/devtools/%s/page", baseRemoteUrl ,sessionId);
 
             MutableCapabilities mutableCapabilities = (MutableCapabilities) capabilitiesField.get(driver);
             mutableCapabilities.setCapability("se:cdp", devtoolsUrl);
