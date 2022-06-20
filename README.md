@@ -33,6 +33,10 @@ And then add the maven dependency
             <version>1.0.2</version>
         </dependency>
 ```
+
+if you are use another tools , you can check this link for the instruction https://jitpack.io/#blibli-badak/selenium-har-util 
+
+
 Create your Driver
 ```java
 driver = new ChromeDriver(options);
