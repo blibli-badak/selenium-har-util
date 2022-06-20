@@ -43,7 +43,7 @@ driver = new ChromeDriver(options);
 ```
 Integrate with our network listener
 ```java
-networkListener = new NetworkListener(driver, "har.har");
+NetworkListener networkListener = new NetworkListener(driver, "har.har");
 ```
 Start Capture your network request
 ```java
