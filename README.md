@@ -15,6 +15,42 @@ This util is supposed to be get network request and write a HAR file.
 - Java 8
 - Maven
 
-### Instalation 
-- todo
-- 
+### Instalation
+
+Add Repository for this dependency
+```xml
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+```
+
+And then add the maven dependency
+```xml
+        <dependency>
+            <groupId>com.github.blibli-badak</groupId>
+            <artifactId>selenium-har-util</artifactId>
+            <version>1.0.2</version>
+        </dependency>
+```
+Create your Driver
+```java
+driver = new ChromeDriver(options);
+```
+Integrate with our network listener
+```java
+networkListener = new NetworkListener(driver, "har.har");
+```
+Start Capture your network request
+```java
+networkListener.start();
+```
+And Run your automation.
+After finishing your automation , you can create HAR files by using this method
+
+```java
+driver.quit();
+networkListener.createHarFile();
+```
+
+And voila , in your project will be have new file called har.har , and you can inspect it via your favourite HAR viewer or you can open it via inspect element -> Network tab in your browser
