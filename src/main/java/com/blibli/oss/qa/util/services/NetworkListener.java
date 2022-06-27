@@ -99,6 +99,7 @@ public class NetworkListener {
         }
         devTools.createSession();
         Filter reportStatusCodes = next -> req -> {
+            // add trycatch
             HttpResponse res = next.execute(req);
 //            responses.add(res);
 //            requests.add(req);

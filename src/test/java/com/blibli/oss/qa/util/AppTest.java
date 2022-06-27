@@ -19,9 +19,7 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 
 /**
@@ -81,6 +79,21 @@ public class AppTest {
          */
     }
 
+    @Test
+    public void testWithOpenNewTab(){
+        WebDriverManager.chromedriver().setup();
+        driver = new ChromeDriver();
+        networkListener = new NetworkListener(driver,"har.har");
+        networkListener.start();
+        driver.manage().window().maximize();
+        driver.get("http://gosoft.web.id/selenium/");
+        WebElement linkNewTab = driver.findElement(By.id("new-tab"));
+        linkNewTab.click();
+        String currentWindow = driver.getWindowHandle();
+        driver.switchTo().window(currentWindow);
+        System.out.println("Lalalala");
+    }
+
 //    @Test
     public void tryUsingRemoteAccess() throws MalformedURLException {
         // Todo : Check Selenoid implementation https://github.com/SeleniumHQ/selenium/issues/9803#issuecomment-1015300383
@@ -114,4 +127,5 @@ public class AppTest {
         driver.quit();
         networkListener.createHarFile();
     }
+
 }
