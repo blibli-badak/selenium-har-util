@@ -124,13 +124,15 @@ public class AppTest {
 
     @AfterEach
     public void tearDown() {
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         driver.quit();
         networkListener.createHarFile();
+        // in the github actions we need add some wait , because chrome exited too slow ,
+        // so when we create new session previous chrome is not closed completly
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }
