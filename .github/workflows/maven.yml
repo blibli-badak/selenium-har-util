@@ -12,7 +12,7 @@ on:
 env:
   ## Sets environment variable
   CHROME_MODE: HEADLESS
-  
+
 jobs:
   build:
 
