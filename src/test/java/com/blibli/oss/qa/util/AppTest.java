@@ -13,7 +13,6 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.remote.Augmenter;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
@@ -46,19 +45,10 @@ public class AppTest {
 
     @Test
     public void testWithLocalDriver() {
-        options.addArguments("--no-sandbox");
-        options.addArguments("--disable-dev-shm-usage");
-        if(Optional.ofNullable(System.getenv("CHROME_MODE")).orElse("").equalsIgnoreCase("headless")){
-            options.addArguments("--headless");
-            System.out.println("Running With headless mode");
-        }else{
-            System.out.println("Running Without headless mode");
-        }
-        WebDriverManager.chromedriver().setup();
-
+        setupLocalDriver();
         driver = new ChromeDriver(options);
         driver.manage().window().maximize();
-        networkListener = new NetworkListener(driver, "har.har");
+        networkListener = new NetworkListener(driver, "har2.har");
         networkListener.start();
         driver.get("https://en.wiktionary.org/wiki/Wiktionary:Main_Page");
         WebElement element = driver.findElement(By.id("searchInput"));
@@ -73,9 +63,21 @@ public class AppTest {
          */
     }
 
+    private void setupLocalDriver(){
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+        if(Optional.ofNullable(System.getenv("CHROME_MODE")).orElse("").equalsIgnoreCase("headless")){
+            options.addArguments("--headless");
+            System.out.println("Running With headless mode");
+        }else{
+            System.out.println("Running Without headless mode");
+        }
+        WebDriverManager.chromedriver().setup();
+    }
+
     @Test
     public void testWithOpenNewTab(){
-        WebDriverManager.chromedriver().setup();
+        setupLocalDriver();
         driver = new ChromeDriver();
         networkListener = new NetworkListener(driver,"har.har");
         networkListener.start();
