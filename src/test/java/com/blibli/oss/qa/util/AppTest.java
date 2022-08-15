@@ -53,8 +53,6 @@ public class AppTest {
         driver.get("https://en.wiktionary.org/wiki/Wiktionary:Main_Page");
         WebElement element = driver.findElement(By.id("searchInput"));
         element.sendKeys("Kiwi/n");
-
-
         /**
          * Todo : https://www.browserstack.com/docs/automate/selenium/event-driven-testing#intercept-network ubah ChromeDriver jadi webdriver biasa , trus ganti devtoolsnya
          * Todo : Tambahin test jika buka 2 tab
@@ -78,7 +76,7 @@ public class AppTest {
     @Test
     public void testWithOpenNewTab(){
         setupLocalDriver();
-        driver = new ChromeDriver();
+        driver = new ChromeDriver(options);
         networkListener = new NetworkListener(driver,"har.har");
         networkListener.start();
         driver.manage().window().maximize();
