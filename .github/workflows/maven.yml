@@ -8,6 +8,10 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+    
+env:
+  ## Sets environment variable
+  CHROME_MODE: HEADLESS
 
 jobs:
   build:
