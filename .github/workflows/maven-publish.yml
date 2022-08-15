@@ -6,6 +6,9 @@ name: Maven Package
 on:
   release:
     types: [created]
+env:
+  ## Sets environment variable
+  CHROME_MODE: HEADLESS    
 
 jobs:
   build:
