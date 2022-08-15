@@ -41,25 +41,19 @@ public class AppTest {
 
     @BeforeEach
     public void setup() {
-
-        Map<String, Object> prefs = new HashMap<String, Object>();
-        prefs.put("enableVNC", true);
-        prefs.put("enableVideo", false);
-        prefs.put("sessionTimeout", "120s");
-        capabilities = new DesiredCapabilities();
-        capabilities.setCapability("browserName", "chrome");
-        capabilities.setCapability("browserVersion", "96.0");
-        capabilities.setCapability("selenoid:options", prefs);
-//        options.merge(capabilities);
-
+        options = new ChromeOptions();
     }
 
     @Test
     public void testWithLocalDriver() {
-        options = new ChromeOptions();
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("--headless");
+        if(Optional.ofNullable(System.getenv("CHROME_MODE")).orElse("").equalsIgnoreCase("headless")){
+            options.addArguments("--headless");
+            System.out.println("Running With headless mode");
+        }else{
+            System.out.println("Running Without headless mode");
+        }
         WebDriverManager.chromedriver().setup();
 
         driver = new ChromeDriver(options);
@@ -96,6 +90,15 @@ public class AppTest {
 
 //    @Test
     public void tryUsingRemoteAccess() throws MalformedURLException {
+        Map<String, Object> prefs = new HashMap<String, Object>();
+        prefs.put("enableVNC", true);
+        prefs.put("enableVideo", false);
+        prefs.put("sessionTimeout", "120s");
+        capabilities = new DesiredCapabilities();
+        capabilities.setCapability("browserName", "chrome");
+        capabilities.setCapability("browserVersion", "96.0");
+        capabilities.setCapability("selenoid:options", prefs);
+        options.merge(capabilities);
         // Todo : Check Selenoid implementation https://github.com/SeleniumHQ/selenium/issues/9803#issuecomment-1015300383
         String seleniumUrl = Optional.ofNullable(System.getenv("SE_REMOTE_URL")).orElse("http://localhost:4444/wd/hub/");
 //        String seleniumUrl = "http://192.168.56.107:4444/wd/hub/";
