@@ -13,7 +13,6 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.remote.Augmenter;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
@@ -41,36 +40,19 @@ public class AppTest {
 
     @BeforeEach
     public void setup() {
-
-        Map<String, Object> prefs = new HashMap<String, Object>();
-        prefs.put("enableVNC", true);
-        prefs.put("enableVideo", false);
-        prefs.put("sessionTimeout", "120s");
-        capabilities = new DesiredCapabilities();
-        capabilities.setCapability("browserName", "chrome");
-        capabilities.setCapability("browserVersion", "96.0");
-        capabilities.setCapability("selenoid:options", prefs);
-//        options.merge(capabilities);
-
+        options = new ChromeOptions();
     }
 
     @Test
     public void testWithLocalDriver() {
-        options = new ChromeOptions();
-        options.addArguments("--no-sandbox");
-        options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("--headless");
-        WebDriverManager.chromedriver().setup();
-
+        setupLocalDriver();
         driver = new ChromeDriver(options);
         driver.manage().window().maximize();
-        networkListener = new NetworkListener(driver, "har.har");
+        networkListener = new NetworkListener(driver, "har2.har");
         networkListener.start();
         driver.get("https://en.wiktionary.org/wiki/Wiktionary:Main_Page");
         WebElement element = driver.findElement(By.id("searchInput"));
         element.sendKeys("Kiwi/n");
-
-
         /**
          * Todo : https://www.browserstack.com/docs/automate/selenium/event-driven-testing#intercept-network ubah ChromeDriver jadi webdriver biasa , trus ganti devtoolsnya
          * Todo : Tambahin test jika buka 2 tab
@@ -79,10 +61,22 @@ public class AppTest {
          */
     }
 
+    private void setupLocalDriver(){
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+        if(Optional.ofNullable(System.getenv("CHROME_MODE")).orElse("").equalsIgnoreCase("headless")){
+            options.addArguments("--headless");
+            System.out.println("Running With headless mode");
+        }else{
+            System.out.println("Running Without headless mode");
+        }
+        WebDriverManager.chromedriver().setup();
+    }
+
     @Test
     public void testWithOpenNewTab(){
-        WebDriverManager.chromedriver().setup();
-        driver = new ChromeDriver();
+        setupLocalDriver();
+        driver = new ChromeDriver(options);
         networkListener = new NetworkListener(driver,"har.har");
         networkListener.start();
         driver.manage().window().maximize();
@@ -96,6 +90,15 @@ public class AppTest {
 
 //    @Test
     public void tryUsingRemoteAccess() throws MalformedURLException {
+        Map<String, Object> prefs = new HashMap<String, Object>();
+        prefs.put("enableVNC", true);
+        prefs.put("enableVideo", false);
+        prefs.put("sessionTimeout", "120s");
+        capabilities = new DesiredCapabilities();
+        capabilities.setCapability("browserName", "chrome");
+        capabilities.setCapability("browserVersion", "96.0");
+        capabilities.setCapability("selenoid:options", prefs);
+        options.merge(capabilities);
         // Todo : Check Selenoid implementation https://github.com/SeleniumHQ/selenium/issues/9803#issuecomment-1015300383
         String seleniumUrl = Optional.ofNullable(System.getenv("SE_REMOTE_URL")).orElse("http://localhost:4444/wd/hub/");
 //        String seleniumUrl = "http://192.168.56.107:4444/wd/hub/";
@@ -119,13 +122,15 @@ public class AppTest {
 
     @AfterEach
     public void tearDown() {
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         driver.quit();
         networkListener.createHarFile();
+        // in the github actions we need add some wait , because chrome exited too slow ,
+        // so when we create new session previous chrome is not closed completly
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }
