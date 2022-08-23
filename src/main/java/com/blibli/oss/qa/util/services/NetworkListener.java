@@ -218,4 +218,32 @@ public class NetworkListener {
         }
         return stringBuilder.toString();
     }
+
+    public String getBaseRemoteUrl() {
+        return baseRemoteUrl;
+    }
+
+    public DevTools getDevTools() {
+        return devTools;
+    }
+
+    public ArrayList<HttpRequest> getRequests() {
+        return requests;
+    }
+
+    public ArrayList<HttpResponse> getResponses() {
+        return responses;
+    }
+
+    public HashMap<Long, HarModel> getHarModelHashMap() {
+        return harModelHashMap;
+    }
+
+    public String getHarFile() {
+        return harFile;
+    }
+
+    public HarCreatorBrowser getHarCreatorBrowser() {
+        return harCreatorBrowser;
+    }
 }
