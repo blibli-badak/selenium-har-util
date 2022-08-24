@@ -167,7 +167,6 @@ public class NetworkListener {
         // create har page
         String firstHarSetKey = harModelHashMap.entrySet().iterator().next().getKey();
         harPages.add(createHarPage(harModelHashMap.get(firstHarSetKey).getRequest(), harModelHashMap.get(firstHarSetKey).getResponse()));
-        System.out.println("request size : " + requests.size() + " response size : " + responses.size());
         // looping each harModelHashMap
         for (Map.Entry<String, HarModel> entry : harModelHashMap.entrySet()) {
             try {
