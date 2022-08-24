@@ -83,8 +83,10 @@ public class AppTest {
         driver.get("http://gosoft.web.id/selenium/");
         WebElement linkNewTab = driver.findElement(By.id("new-tab"));
         linkNewTab.click();
-        String currentWindow = driver.getWindowHandle();
-        driver.switchTo().window(currentWindow);
+        ArrayList<String> tabs2 = new ArrayList<>(driver.getWindowHandles());
+        driver.switchTo().window(tabs2.get(1));
+        networkListener.start();
+        driver.navigate().refresh();
         System.out.println("Lalalala");
     }
 
