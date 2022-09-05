@@ -36,6 +36,8 @@ public class HarEntryConverter {
         harTiming.setConnect(response.getTiming().get().getConnectStart().intValue());
         harTiming.setSsl(response.getTiming().get().getSslStart().intValue());
         harTiming.setSend(response.getTiming().get().getSendStart().intValue());
+        harTiming.setReceive(response.getTiming().get().getReceiveHeadersEnd().intValue());
+        harTiming.setWait(0);  // TODO: check the correct value of wait
         return harTiming;
     }
 
@@ -75,6 +77,9 @@ public class HarEntryConverter {
         harRequest.setComment("");
         harRequest.setHttpVersion("HTTP/1.1");
         harRequest.setBodySize((Long) response.getEncodedDataLength());
+        HarPostData harPostData = new HarPostData();
+        harPostData.setMimeType(response.getMimeType());
+        harRequest.setPostData(harPostData);
         return harRequest;
     }
 

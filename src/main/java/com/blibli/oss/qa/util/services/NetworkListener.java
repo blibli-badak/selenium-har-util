@@ -206,6 +206,7 @@ public class NetworkListener {
     public HarPage createHarPage(Request request, Response response) {
         HarPage harPage = new HarPage();
         harPage.setComment("Create by Har Utils");
+        harPage.setId(String.valueOf(response.getConnectionId()));  // TODO: check the correct value of page id
         HarPageTiming harPageTiming = new HarPageTiming();
         harPageTiming.setOnContentLoad(0);
         harPage.setPageTimings(harPageTiming);
