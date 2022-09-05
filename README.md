@@ -58,3 +58,14 @@ networkListener.createHarFile();
 ```
 
 And voila , in your project will be have new file called har.har , and you can inspect it via your favourite HAR viewer or you can open it via inspect element -> Network tab in your browser
+
+### HAR validator
+Using Chrome:
+- Open Inspect Tab
+- Network tab
+- Click on import HAR file
+
+Using free web analyzer
+- https://toolbox.googleapps.com/apps/har_analyzer/
+- http://www.softwareishard.com/har/viewer/
+
