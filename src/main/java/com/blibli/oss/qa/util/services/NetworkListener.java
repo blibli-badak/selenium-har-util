@@ -8,9 +8,9 @@ import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.devtools.DevTools;
 import org.openqa.selenium.devtools.HasDevTools;
-import org.openqa.selenium.devtools.v104.network.Network;
-import org.openqa.selenium.devtools.v104.network.model.Request;
-import org.openqa.selenium.devtools.v104.network.model.Response;
+import org.openqa.selenium.devtools.v106.network.Network;
+import org.openqa.selenium.devtools.v106.network.model.Request;
+import org.openqa.selenium.devtools.v106.network.model.Response;
 import org.openqa.selenium.remote.Augmenter;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.remote.http.HttpRequest;
@@ -219,5 +219,16 @@ public class NetworkListener {
         HarEntryConverter harEntry = new HarEntryConverter(request, response, time);
         harEntry.setup();
         return harEntry.getHarEntry();
+    }
+
+    /**
+     * @param networkListener - NetworkListener
+     * @param driver browser driver
+     * @param tabIndex num tab of your destination, 0 is first tab index
+     */
+    public static void switchTab(NetworkListener networkListener, WebDriver driver, Integer tabIndex) {
+        driver.switchTo().window(new ArrayList<>(driver.getWindowHandles()).get(tabIndex));
+        networkListener.start();
+        driver.navigate().refresh();
     }
 }
