@@ -1,8 +1,8 @@
 package com.blibli.oss.qa.util.services;
 
 import de.sstoehr.harreader.model.*;
-import org.openqa.selenium.devtools.v104.network.model.Request;
-import org.openqa.selenium.devtools.v104.network.model.Response;
+import org.openqa.selenium.devtools.v106.network.model.Request;
+import org.openqa.selenium.devtools.v106.network.model.Response;
 
 import java.util.Date;
 import java.util.List;

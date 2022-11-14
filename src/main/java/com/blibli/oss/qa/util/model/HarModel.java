@@ -1,8 +1,8 @@
 package com.blibli.oss.qa.util.model;
 
 import lombok.Data;
-import org.openqa.selenium.devtools.v104.network.model.Request;
-import org.openqa.selenium.devtools.v104.network.model.Response;
+import org.openqa.selenium.devtools.v106.network.model.Request;
+import org.openqa.selenium.devtools.v106.network.model.Response;
 
 @Data
 public class HarModel {
