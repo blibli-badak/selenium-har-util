@@ -6,7 +6,7 @@
 
     <groupId>com.blibli.oss.qa.util</groupId>
     <artifactId>har-util</artifactId>
-    <version>1.0.4</version>
+    <version>1.0.5</version>
 
     <name>har-util</name>
     <url>http://www.blibli.com</url>
