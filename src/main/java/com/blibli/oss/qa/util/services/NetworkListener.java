@@ -4,6 +4,7 @@ import com.blibli.oss.qa.util.model.HarModel;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.sstoehr.harreader.model.*;
+import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.devtools.DevTools;
@@ -164,15 +165,15 @@ public class NetworkListener {
         harLog.setBrowser(harCreatorBrowser);
         List<HarPage> harPages = new ArrayList<>();
         List<HarEntry> harEntries = new ArrayList<>();
-        // create har page
-        String firstHarSetKey = harModelHashMap.entrySet().iterator().next().getKey();
-        harPages.add(createHarPage(harModelHashMap.get(firstHarSetKey).getRequest(), harModelHashMap.get(firstHarSetKey).getResponse()));
         // looping each harModelHashMap
         for (Map.Entry<String, HarModel> entry : harModelHashMap.entrySet()) {
+            System.out.println("Processing Har Entry   " + entry.getKey() + " Request URL "  + entry.getValue().getRequest().getUrl());
             try {
+                System.out.println(entry.getValue());
                 harEntries.add(createHarEntry(entry.getValue().getRequest(), entry.getValue().getResponse(), entry.getValue().getResponse().getResponseTime().get().toJson().longValue()));
             } catch (Exception e) {
-                System.out.println("error processing data: " + e.getMessage() + " Ini errornya ");
+                e.printStackTrace();
+                System.out.println("error processing data: " + e.getMessage() + " ");
                 System.out.println(entry.getValue().getResponse());
             }
         }

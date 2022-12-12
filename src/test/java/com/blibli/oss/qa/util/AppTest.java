@@ -90,6 +90,17 @@ public class AppTest {
         System.out.println("Lalalala");
     }
 
+    @Test
+    public void testNotFound(){
+        setupLocalDriver();
+        driver = new ChromeDriver(options);
+        networkListener = new NetworkListener(driver,"har-not-found.har");
+        networkListener.start();
+        driver.manage().window().maximize();
+        driver.get("http://gosoft.web.id/error-not-found/");
+        System.out.println("Lalalala");
+    }
+
 //    @Test
     public void tryUsingRemoteAccess() throws MalformedURLException {
         Map<String, Object> prefs = new HashMap<String, Object>();
