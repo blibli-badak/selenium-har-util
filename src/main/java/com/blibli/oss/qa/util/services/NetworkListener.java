@@ -25,6 +25,7 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.util.*;
 
+@Slf4j
 public class NetworkListener {
     static final String targetPathFile = System.getProperty("user.dir") + "/target/";
     private final ArrayList<HttpRequest> requests = new ArrayList<>();
@@ -105,7 +106,7 @@ public class NetworkListener {
                 this.devTools = ((HasDevTools) driver).getDevTools();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error on initialize devtools on Start() but don't worry we will continue the process " , e);
         }
         devTools.createSession();
         devTools.send(Network.enable(Optional.empty(), Optional.empty(), Optional.empty()));
@@ -140,7 +141,7 @@ public class NetworkListener {
             mutableCapabilities.setCapability("se:cdp", devtoolsUrl);
             mutableCapabilities.setCapability("se:cdpVersion", mutableCapabilities.getBrowserVersion());
         } catch (Exception e) {
-            System.err.println("Failed to spoof RemoteWebDriver capabilities :sadpanda:");
+            log.error("Failed to spoof RemoteWebDriver capabilities :sadpanda:" , e);
         }
 
         // Proceed to "augment" the driver and get a dev tools client ...
@@ -167,17 +168,15 @@ public class NetworkListener {
         List<HarEntry> harEntries = new ArrayList<>();
         // looping each harModelHashMap
         for (Map.Entry<String, HarModel> entry : harModelHashMap.entrySet()) {
-            System.out.println("Processing Har Entry   " + entry.getKey() + " Request URL "  + entry.getValue().getRequest().getUrl());
             try {
-                System.out.println(entry.getValue());
+                log.debug( "Processing data " + entry.getValue());
                 harEntries.add(createHarEntry(entry.getValue().getRequest(), entry.getValue().getResponse(), entry.getValue().getResponse().getResponseTime().get().toJson().longValue()));
             } catch (Exception e) {
                 e.printStackTrace();
-                System.out.println("error processing data: " + e.getMessage() + " ");
-                System.out.println(entry.getValue().getResponse());
+                log.error("error processing data: ", e);
             }
         }
-        System.out.printf("har entry size : %d", harEntries.size());
+        log.info("har entry size : %d", harEntries.size());
         harLog.setPages(harPages);
         harLog.setEntries(harEntries);
         har.setLog(harLog);
