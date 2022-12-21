@@ -166,6 +166,10 @@ public class NetworkListener {
         harLog.setBrowser(harCreatorBrowser);
         List<HarPage> harPages = new ArrayList<>();
         List<HarEntry> harEntries = new ArrayList<>();
+        // create har page
+        String firstHarSetKey = harModelHashMap.entrySet().iterator().next().getKey();
+        harPages.add(createHarPage(harModelHashMap.get(firstHarSetKey).getRequest(), harModelHashMap.get(firstHarSetKey).getResponse()));
+
         // looping each harModelHashMap
         for (Map.Entry<String, HarModel> entry : harModelHashMap.entrySet()) {
             try {
