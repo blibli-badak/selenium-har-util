@@ -1,22 +1,31 @@
 package com.blibli.oss.qa.util.services;
 
 import de.sstoehr.harreader.model.*;
-import org.openqa.selenium.devtools.v106.network.model.Request;
-import org.openqa.selenium.devtools.v106.network.model.Response;
+import org.openqa.selenium.remote.http.HttpRequest;
+import org.openqa.selenium.remote.http.HttpResponse;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 public class HarEntryConverter {
-    private final Request request;
-    private final Response response;
+    private HttpRequest httpRequest;
+    private HttpResponse httpResponse;
     private final HarEntry harEntry;
     private final long time;
 
-    public HarEntryConverter(Request request, Response response, long time) {
+    //    public HarEntryConverter(Request request, Response response) {
+//        harEntry = new HarEntry();
+//        this.request = request;
+//        this.response = response;
+//    }
+    public HarEntryConverter(HttpRequest httpRequest, HttpResponse httpResponse , long time) {
         harEntry = new HarEntry();
-        this.request = request;
-        this.response = response;
+        this.httpRequest = httpRequest;
+        this.httpResponse = httpResponse;
         this.time = time;
     }
 
@@ -32,39 +41,58 @@ public class HarEntryConverter {
 
     public HarTiming convertHarTiming() {
         HarTiming harTiming = new HarTiming();
-        harTiming.setDns(response.getTiming().get().getDnsStart().intValue());
-        harTiming.setConnect(response.getTiming().get().getConnectStart().intValue());
-        harTiming.setSsl(response.getTiming().get().getSslStart().intValue());
-        harTiming.setSend(response.getTiming().get().getSendStart().intValue());
-        harTiming.setReceive(response.getTiming().get().getReceiveHeadersEnd().intValue());
-        harTiming.setWait(0);  // TODO: check the correct value of wait
+        harTiming.setBlocked(0);
+        harTiming.setDns(0);
+        harTiming.setConnect(0);
+        harTiming.setSend(0);
+        harTiming.setWait(0);
+        harTiming.setReceive(0);
         return harTiming;
     }
 
     private HarResponse convertHarResponse() {
         HarResponse harResponse = new HarResponse();
-        harResponse.setStatus(response.getStatus());
-        harResponse.setStatusText(response.getStatusText());
+        harResponse.setStatus(httpResponse.getStatus());
+        harResponse.setStatusText((httpResponse.isSuccessful() ? "OK" : "FAILED"));
         harResponse.setHttpVersion("HTTP/1.1");
         harResponse.setRedirectURL("");
         harResponse.setHeaders(convertHarHeadersResponse());
         harResponse.setContent(setHarContentResponse());
         return harResponse;
     }
+    private String convertInputStreamtoString(InputStream inputStream){
+        StringBuilder stringBuilder = new StringBuilder();
+        try {
+            int read;
+            while ((read = inputStream.read()) != -1) {
+                stringBuilder.append((char)read);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return stringBuilder.toString();
+    }
 
     private HarContent setHarContentResponse() {
         HarContent harContent = new HarContent();
-        harContent.setSize((Long) response.getEncodedDataLength());
-        harContent.setMimeType(response.getMimeType());
+        try {
+            harContent.setSize((long) httpResponse.getContent().get().available());
+        } catch (IOException e) {
+            e.printStackTrace();
+            harContent.setSize(0L);
+        }
+        harContent.setText(convertInputStreamtoString(httpResponse.getContent().get()));
+        harContent.setMimeType(Optional.ofNullable(httpResponse.getHeader("Content-Type")).orElse("").equals("")? "application/x-www-form-urlencoded" : httpResponse.getHeader("Content-Type"));
+
         return harContent;
     }
 
     private List<HarHeader> convertHarHeadersResponse() {
         List<HarHeader> harHeaders = new java.util.ArrayList<>();
-        request.getHeaders().forEach((k, v) -> {
+        httpResponse.getHeaderNames().forEach(s -> {
             HarHeader harHeader = new HarHeader();
-            harHeader.setName(k);
-            harHeader.setValue(String.valueOf(v));
+            harHeader.setName(s);
+            harHeader.setValue(String.valueOf(s));
             harHeaders.add(harHeader);
         });
         return harHeaders;
@@ -72,13 +100,26 @@ public class HarEntryConverter {
 
     public HarRequest convertHarRequest() {
         HarRequest harRequest = new HarRequest();
-        harRequest.setMethod(HttpMethod.valueOf(request.getMethod()));
-        harRequest.setUrl(request.getUrl());
+        harRequest.setMethod(HttpMethod.valueOf(httpRequest.getMethod().toString()));
+        harRequest.setUrl(httpRequest.getUri());
         harRequest.setComment("");
         harRequest.setHttpVersion("HTTP/1.1");
-        harRequest.setBodySize((Long) response.getEncodedDataLength());
+        try {
+            harRequest.setBodySize((long) httpRequest.getContent().get().available());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         HarPostData harPostData = new HarPostData();
-        harPostData.setMimeType(response.getMimeType());
+        harPostData.setText(convertInputStreamtoString(httpRequest.getContent().get()));
+        List<HarPostDataParam> harPostDataParams = new ArrayList<>();
+        httpRequest.getQueryParameterNames().forEach(s -> {
+            HarPostDataParam harPostDataParam = new HarPostDataParam();
+            harPostDataParam.setName(s);
+            harPostDataParam.setValue(httpRequest.getQueryParameter(s));
+            harPostDataParams.add(harPostDataParam);
+        });
+        harPostData.setParams(harPostDataParams);
+        harPostData.setMimeType((Optional.ofNullable(httpRequest.getHeader("Content-Type")).orElse("").equalsIgnoreCase("") ? "application/x-www-form-urlencoded" : httpRequest.getHeader("Content-Type")));
         harRequest.setPostData(harPostData);
         return harRequest;
     }

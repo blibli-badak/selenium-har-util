@@ -1,25 +1,25 @@
 package com.blibli.oss.qa.util.model;
 
 import lombok.Data;
-import org.openqa.selenium.devtools.v106.network.model.Request;
-import org.openqa.selenium.devtools.v106.network.model.Response;
+
+import org.openqa.selenium.remote.http.HttpRequest;
+import org.openqa.selenium.remote.http.HttpResponse;
 
 @Data
 public class HarModel {
-    private Request request;
+    private HttpRequest httpRequest;
+    private HttpResponse httpResponse;
 
-    private Response response;
-
-    public HarModel(Request request, Response response) {
-        this.request = request;
-        this.response = response;
+    public HarModel(HttpRequest httpRequest, HttpResponse httpResponse) {
+        this.httpRequest = httpRequest;
+        this.httpResponse = httpResponse;
     }
 
-    public HarModel(Request request) {
-        this.request = request;
+    public HttpRequest getHttpRequest() {
+        return this.httpRequest;
     }
 
-    public HarModel(Response response) {
-        this.response = response;
+    public HttpResponse getHttpResponse() {
+        return this.httpResponse;
     }
 }
