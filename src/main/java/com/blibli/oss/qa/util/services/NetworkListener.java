@@ -4,15 +4,15 @@ import com.blibli.oss.qa.util.model.HarModel;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.sstoehr.harreader.model.*;
+import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.devtools.DevTools;
 import org.openqa.selenium.devtools.HasDevTools;
-import org.openqa.selenium.devtools.v106.network.Network;
-import org.openqa.selenium.devtools.v106.network.model.Request;
-import org.openqa.selenium.devtools.v106.network.model.Response;
+import org.openqa.selenium.devtools.NetworkInterceptor;
 import org.openqa.selenium.remote.Augmenter;
 import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.remote.http.Filter;
 import org.openqa.selenium.remote.http.HttpRequest;
 import org.openqa.selenium.remote.http.HttpResponse;
 
@@ -26,8 +26,6 @@ import java.util.*;
 
 public class NetworkListener {
     static final String targetPathFile = System.getProperty("user.dir") + "/target/";
-    private final ArrayList<HttpRequest> requests = new ArrayList<>();
-    private final ArrayList<HttpResponse> responses = new ArrayList<>();
     private final HashMap<String, HarModel> harModelHashMap = new HashMap<>();
     private WebDriver driver;
     private String baseRemoteUrl;
@@ -107,23 +105,13 @@ public class NetworkListener {
             e.printStackTrace();
         }
         devTools.createSession();
-        devTools.send(Network.enable(Optional.empty(), Optional.empty(), Optional.empty()));
-        devTools.addListener(Network.requestWillBeSent(), request -> {
-            HarModel harModel = harModelHashMap.get(String.valueOf(request.getRequestId()));
-            if (harModel != null) {
-                harModelHashMap.put(String.valueOf(request.getRequestId()), new HarModel(request.getRequest(), harModel.getResponse()));
-            } else {
-                harModelHashMap.put(String.valueOf(request.getRequestId()), new HarModel(request.getRequest()));
-            }
-        });
-        devTools.addListener(Network.responseReceived(), response -> {
-            HarModel harModel = harModelHashMap.get(String.valueOf(response.getRequestId()));
-            if (harModel != null) {
-                harModelHashMap.put(String.valueOf(response.getRequestId()), new HarModel(harModel.getRequest(), response.getResponse()));
-            } else {
-                harModelHashMap.put(String.valueOf(response.getRequestId()), new HarModel(response.getResponse()));
-            }
-        });
+        Filter reportStatusCodes = next -> req -> {
+            // add trycatch
+            HttpResponse res = next.execute(req);
+            harModelHashMap.put(String.valueOf(Calendar.getInstance().getTimeInMillis()), new HarModel(req, res));
+            return res;
+        };
+        NetworkInterceptor networkInterceptor = new NetworkInterceptor(driver, reportStatusCodes);
     }
 
     public DevTools getCdpUsingCustomurl() {
@@ -164,16 +152,18 @@ public class NetworkListener {
         harLog.setBrowser(harCreatorBrowser);
         List<HarPage> harPages = new ArrayList<>();
         List<HarEntry> harEntries = new ArrayList<>();
-        // create har page
-        String firstHarSetKey = harModelHashMap.entrySet().iterator().next().getKey();
-        harPages.add(createHarPage(harModelHashMap.get(firstHarSetKey).getRequest(), harModelHashMap.get(firstHarSetKey).getResponse()));
         // looping each harModelHashMap
+//        String firstKey = harModelHashMap.keySet().stream().min(String::compareTo).get();
+//        harPages.add(createHarPage(harModelHashMap.get(firstKey).getHttpRequest(), harModelHashMap.get(firstKey).getHttpResponse()));
         for (Map.Entry<String, HarModel> entry : harModelHashMap.entrySet()) {
+            System.out.println("Processing Har Entry   " + entry.getKey() + " Request URL "  + entry.getValue().getHttpRequest().getUri());
             try {
-                harEntries.add(createHarEntry(entry.getValue().getRequest(), entry.getValue().getResponse(), entry.getValue().getResponse().getResponseTime().get().toJson().longValue()));
+//                System.out.println(entry.getValue().getHttpResponse().getStatus());
+                harEntries.add(createHarEntry(entry.getValue().getHttpRequest(),entry.getValue().getHttpResponse(), Long.parseLong(entry.getKey())));
             } catch (Exception e) {
-                System.out.println("error processing data: " + e.getMessage() + " Ini errornya ");
-                System.out.println(entry.getValue().getResponse());
+                e.printStackTrace();
+                System.out.println("error processing data: " + e.getMessage() + " ");
+                System.out.println(entry.getValue().getHttpResponse());
             }
         }
         System.out.printf("har entry size : %d", harEntries.size());
@@ -203,23 +193,24 @@ public class NetworkListener {
         harCreatorBrowser.setComment("Created by HAR utils");
     }
 
-    public HarPage createHarPage(Request request, Response response) {
+    public HarPage createHarPage(HttpRequest request , HttpResponse response) {
         HarPage harPage = new HarPage();
         harPage.setComment("Create by Har Utils");
-        harPage.setId(String.valueOf(response.getConnectionId()));  // TODO: check the correct value of page id
         HarPageTiming harPageTiming = new HarPageTiming();
         harPageTiming.setOnContentLoad(0);
         harPage.setPageTimings(harPageTiming);
+//        harPage.setId("Page_" + counter);
         harPage.setStartedDateTime(new Date());
-        harPage.setTitle(request.getUrl() != null ? request.getUrl() : response.getUrl());
+        harPage.setTitle(request.getUri());
         return harPage;
     }
 
-    public HarEntry createHarEntry(Request request, Response response, long time) {
-        HarEntryConverter harEntry = new HarEntryConverter(request, response, time);
+    public HarEntry createHarEntry(HttpRequest httpRequest, HttpResponse httpResponse, long time) {
+        HarEntryConverter harEntry = new HarEntryConverter(httpRequest, httpResponse, time);
         harEntry.setup();
         return harEntry.getHarEntry();
     }
+
 
     /**
      * @param networkListener - NetworkListener
