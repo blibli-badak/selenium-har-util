@@ -64,6 +64,7 @@ public class AppTest {
     private void setupLocalDriver(){
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
+        options.addArguments("--remote-allow-origins=*");
         if(Optional.ofNullable(System.getenv("CHROME_MODE")).orElse("").equalsIgnoreCase("headless")){
             options.addArguments("--headless");
             System.out.println("Running With headless mode");

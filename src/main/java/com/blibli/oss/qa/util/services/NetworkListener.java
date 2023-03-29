@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 public class NetworkListener {
     static final String targetPathFile = System.getProperty("user.dir") + "/target/";
     private final ConcurrentHashMap<String, HarModel> harModelHashMap = new ConcurrentHashMap<>();
@@ -128,7 +129,7 @@ public class NetworkListener {
             mutableCapabilities.setCapability("se:cdp", devtoolsUrl);
             mutableCapabilities.setCapability("se:cdpVersion", mutableCapabilities.getBrowserVersion());
         } catch (Exception e) {
-            System.err.println("Failed to spoof RemoteWebDriver capabilities :sadpanda:");
+            log.info("Failed to spoof RemoteWebDriver capabilities :sadpanda:");
         }
 
         // Proceed to "augment" the driver and get a dev tools client ...
@@ -157,17 +158,15 @@ public class NetworkListener {
 //        String firstKey = harModelHashMap.keySet().stream().min(String::compareTo).get();
 //        harPages.add(createHarPage(harModelHashMap.get(firstKey).getHttpRequest(), harModelHashMap.get(firstKey).getHttpResponse()));
         for (Map.Entry<String, HarModel> entry : harModelHashMap.entrySet()) {
-            System.out.println("Processing Har Entry   " + entry.getKey() + " Request URL "  + entry.getValue().getHttpRequest().getUri());
+            log.debug("Processing Har Entry   " + entry.getKey() + " Request URL "  + entry.getValue().getHttpRequest().getUri());
             try {
 //                System.out.println(entry.getValue().getHttpResponse().getStatus());
                 harEntries.add(createHarEntry(entry.getValue().getHttpRequest(),entry.getValue().getHttpResponse(), Long.parseLong(entry.getKey())));
             } catch (Exception e) {
-                e.printStackTrace();
-                System.out.println("error processing data: " + e.getMessage() + " ");
-                System.out.println(entry.getValue().getHttpResponse());
+                log.error(e.getMessage() , e);
             }
         }
-        System.out.printf("har entry size : %d", harEntries.size());
+        log.info("har entry size : %d", harEntries.size());
         harLog.setPages(harPages);
         harLog.setEntries(harEntries);
         har.setLog(harLog);
