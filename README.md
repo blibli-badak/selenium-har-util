@@ -30,7 +30,7 @@ And then add the maven dependency
         <dependency>
             <groupId>com.github.blibli-badak</groupId>
             <artifactId>selenium-har-util</artifactId>
-            <version>1.0.2</version>
+            <version>1.0.5</version>
         </dependency>
 ```
 

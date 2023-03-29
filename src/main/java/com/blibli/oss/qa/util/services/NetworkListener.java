@@ -23,10 +23,11 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class NetworkListener {
     static final String targetPathFile = System.getProperty("user.dir") + "/target/";
-    private final HashMap<String, HarModel> harModelHashMap = new HashMap<>();
+    private final ConcurrentHashMap<String, HarModel> harModelHashMap = new ConcurrentHashMap<>();
     private WebDriver driver;
     private String baseRemoteUrl;
     private DevTools devTools;
