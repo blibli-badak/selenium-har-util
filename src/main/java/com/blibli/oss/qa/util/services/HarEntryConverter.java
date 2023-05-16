@@ -92,7 +92,7 @@ public class HarEntryConverter {
         httpResponse.getHeaderNames().forEach(s -> {
             HarHeader harHeader = new HarHeader();
             harHeader.setName(s);
-            harHeader.setValue(String.valueOf(s));
+            harHeader.setValue(httpResponse.getHeader(s));
             harHeaders.add(harHeader);
         });
         return harHeaders;
