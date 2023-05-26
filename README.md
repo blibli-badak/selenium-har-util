@@ -1,4 +1,5 @@
 ## HAR Util For Selenium 4
+[![](https://jitpack.io/v/blibli-badak/selenium-har-util.svg)](https://jitpack.io/#blibli-badak/selenium-har-util)
 
 ----
 ### Background : 
@@ -25,12 +26,13 @@ Add Repository for this dependency
         </repository>
 ```
 
-And then add the maven dependency
+And then add the maven dependency same with the lattest version in jitpack [![](https://jitpack.io/v/blibli-badak/selenium-har-util.svg)](https://jitpack.io/#blibli-badak/selenium-har-util)
+
 ```xml
         <dependency>
             <groupId>com.github.blibli-badak</groupId>
             <artifactId>selenium-har-util</artifactId>
-            <version>1.0.5</version>
+            <version>1.0.9</version>
         </dependency>
 ```
 
