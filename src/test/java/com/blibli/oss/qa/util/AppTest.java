@@ -63,6 +63,7 @@ public class AppTest {
 
     private void setupLocalDriver(){
         options.addArguments("--no-sandbox");
+        options.addArguments("--remote-allow-origins=*");
         options.addArguments("--disable-dev-shm-usage");
         if(Optional.ofNullable(System.getenv("CHROME_MODE")).orElse("").equalsIgnoreCase("headless")){
             options.addArguments("--headless");

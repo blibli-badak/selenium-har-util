@@ -121,6 +121,15 @@ public class HarEntryConverter {
         harPostData.setParams(harPostDataParams);
         harPostData.setMimeType((Optional.ofNullable(httpRequest.getHeader("Content-Type")).orElse("").equalsIgnoreCase("") ? "application/x-www-form-urlencoded" : httpRequest.getHeader("Content-Type")));
         harRequest.setPostData(harPostData);
+        harRequest.setAdditionalField("content", httpRequest.getContent());
+        List<HarHeader> headers = new ArrayList<>();
+        httpRequest.getHeaderNames().forEach(h -> {
+            HarHeader header = new HarHeader();
+            header.setName(h);
+            header.setValue(httpRequest.getHeader(h));
+            headers.add(header);
+        });
+        harRequest.setHeaders(headers);
         return harRequest;
     }
 

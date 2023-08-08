@@ -222,4 +222,8 @@ public class NetworkListener {
         networkListener.start();
         driver.navigate().refresh();
     }
+
+    public DevTools getDevTools() {
+        return devTools;
+    }
 }
