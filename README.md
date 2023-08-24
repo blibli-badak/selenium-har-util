@@ -13,7 +13,7 @@ This util is supposed to be get network request and write a HAR file.
 - Selenium 4 that support CDP 
 - ChromeDriver
 - Google Chrome or any browser that support CDPSession ( not yet tested in Geckodriver or safari driver)
-- Java 8
+- Java 11
 - Maven
 
 ### Instalation
