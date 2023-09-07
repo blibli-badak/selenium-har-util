@@ -182,10 +182,8 @@ public class NetworkListener {
             String json = om.writeValueAsString(har);
             // write json to file
             Files.write(java.nio.file.Paths.get(harFile), json.getBytes());
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
     }
 
