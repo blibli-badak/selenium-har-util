@@ -15,24 +15,23 @@ public class HarEntryConverter {
     private HttpRequest httpRequest;
     private HttpResponse httpResponse;
     private final HarEntry harEntry;
-    private final long time;
+    private final long startTime;
+    private final long endTime;
 
-    //    public HarEntryConverter(Request request, Response response) {
-//        harEntry = new HarEntry();
-//        this.request = request;
-//        this.response = response;
-//    }
-    public HarEntryConverter(HttpRequest httpRequest, HttpResponse httpResponse , long time) {
+    private final String CONTENT_TYPE = "Content-Type";
+
+    public HarEntryConverter(HttpRequest httpRequest, HttpResponse httpResponse , List<Long> time) {
         harEntry = new HarEntry();
         this.httpRequest = httpRequest;
         this.httpResponse = httpResponse;
-        this.time = time;
+        this.startTime = time.get(0);
+        this.endTime = time.get(1);
     }
 
     public void setup() {
         harEntry.setRequest(convertHarRequest());
-        harEntry.setStartedDateTime(new Date(time));
-        harEntry.setTime((int) time);
+        harEntry.setStartedDateTime(new Date(startTime));
+        harEntry.setTime((int) (endTime - startTime));
         harEntry.setRequest(convertHarRequest());
         harEntry.setResponse(convertHarResponse());
         harEntry.setTimings(convertHarTiming());
@@ -82,7 +81,7 @@ public class HarEntryConverter {
             harContent.setSize(0L);
         }
         harContent.setText(convertInputStreamtoString(httpResponse.getContent().get()));
-        harContent.setMimeType(Optional.ofNullable(httpResponse.getHeader("Content-Type")).orElse("").equals("")? "application/x-www-form-urlencoded" : httpResponse.getHeader("Content-Type"));
+        harContent.setMimeType(Optional.ofNullable(httpResponse.getHeader(CONTENT_TYPE)).orElse("").equals("")? "application/x-www-form-urlencoded" : httpResponse.getHeader(CONTENT_TYPE));
 
         return harContent;
     }
@@ -119,7 +118,7 @@ public class HarEntryConverter {
             harPostDataParams.add(harPostDataParam);
         });
         harPostData.setParams(harPostDataParams);
-        harPostData.setMimeType((Optional.ofNullable(httpRequest.getHeader("Content-Type")).orElse("").equalsIgnoreCase("") ? "application/x-www-form-urlencoded" : httpRequest.getHeader("Content-Type")));
+        harPostData.setMimeType((Optional.ofNullable(httpRequest.getHeader(CONTENT_TYPE)).orElse("").equalsIgnoreCase("") ? "application/x-www-form-urlencoded" : httpRequest.getHeader(CONTENT_TYPE)));
         harRequest.setPostData(harPostData);
         harRequest.setAdditionalField("content", httpRequest.getContent());
         List<HarHeader> headers = new ArrayList<>();
