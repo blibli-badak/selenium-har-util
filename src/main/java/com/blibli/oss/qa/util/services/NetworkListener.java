@@ -3,6 +3,7 @@ package com.blibli.oss.qa.util.services;
 import com.blibli.oss.qa.util.model.HarModel;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 import de.sstoehr.harreader.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.MutableCapabilities;
@@ -28,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class NetworkListener {
     static final String targetPathFile = System.getProperty("user.dir") + "/target/";
-    private final ConcurrentHashMap<String, HarModel> harModelHashMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<List<Long>, HarModel> harModelHashMap = new ConcurrentHashMap<>();
     private WebDriver driver;
     private String baseRemoteUrl;
     private DevTools devTools;
@@ -108,9 +109,11 @@ public class NetworkListener {
         }
         devTools.createSession();
         Filter reportStatusCodes = next -> req -> {
+            Long startTime = System.currentTimeMillis();
             // add trycatch
             HttpResponse res = next.execute(req);
-            harModelHashMap.put(String.valueOf(Calendar.getInstance().getTimeInMillis()), new HarModel(req, res));
+            Long endTime = System.currentTimeMillis();
+            harModelHashMap.put(Lists.newArrayList(startTime, endTime), new HarModel(req, res));
             return res;
         };
         NetworkInterceptor networkInterceptor = new NetworkInterceptor(driver, reportStatusCodes);
@@ -157,11 +160,11 @@ public class NetworkListener {
         // looping each harModelHashMap
 //        String firstKey = harModelHashMap.keySet().stream().min(String::compareTo).get();
 //        harPages.add(createHarPage(harModelHashMap.get(firstKey).getHttpRequest(), harModelHashMap.get(firstKey).getHttpResponse()));
-        for (Map.Entry<String, HarModel> entry : harModelHashMap.entrySet()) {
+        for (Map.Entry<List<Long>, HarModel> entry : harModelHashMap.entrySet()) {
             log.debug("Processing Har Entry   " + entry.getKey() + " Request URL "  + entry.getValue().getHttpRequest().getUri());
             try {
 //                System.out.println(entry.getValue().getHttpResponse().getStatus());
-                harEntries.add(createHarEntry(entry.getValue().getHttpRequest(),entry.getValue().getHttpResponse(), Long.parseLong(entry.getKey())));
+                harEntries.add(createHarEntry(entry.getValue().getHttpRequest(),entry.getValue().getHttpResponse(), entry.getKey()));
             } catch (Exception e) {
                 log.error(e.getMessage() , e);
             }
@@ -179,8 +182,6 @@ public class NetworkListener {
             String json = om.writeValueAsString(har);
             // write json to file
             Files.write(java.nio.file.Paths.get(harFile), json.getBytes());
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -205,7 +206,7 @@ public class NetworkListener {
         return harPage;
     }
 
-    public HarEntry createHarEntry(HttpRequest httpRequest, HttpResponse httpResponse, long time) {
+    public HarEntry createHarEntry(HttpRequest httpRequest, HttpResponse httpResponse, List<Long> time) {
         HarEntryConverter harEntry = new HarEntryConverter(httpRequest, httpResponse, time);
         harEntry.setup();
         return harEntry.getHarEntry();
