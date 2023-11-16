@@ -59,6 +59,14 @@ driver.quit();
 networkListener.createHarFile();
 ```
 
+(Starting from version 1.0.12)
+If you want to filter the HAR to only contain certain requests, you can add a string parameter in the createHarFile() function. Example:
+
+```java
+driver.quit();
+networkListener.createHarFile("en.wiktionary.org");
+```
+
 And voila , in your project will be have new file called har.har , and you can inspect it via your favourite HAR viewer or you can open it via inspect element -> Network tab in your browser
 
 ### HAR validator
