@@ -151,6 +151,10 @@ public class NetworkListener {
     }
 
     public void createHarFile() {
+        createHarFile("");
+    }
+
+    public void createHarFile(String filterString){
         Har har = new Har();
         HarLog harLog = new HarLog();
         harLog.setCreator(harCreatorBrowser);
@@ -163,8 +167,10 @@ public class NetworkListener {
         for (Map.Entry<List<Long>, HarModel> entry : harModelHashMap.entrySet()) {
             log.debug("Processing Har Entry   " + entry.getKey() + " Request URL "  + entry.getValue().getHttpRequest().getUri());
             try {
+                if(entry.getValue().getHttpRequest().getUri().contains(filterString)){
+                    harEntries.add(createHarEntry(entry.getValue().getHttpRequest(),entry.getValue().getHttpResponse(), entry.getKey()));
+                }
 //                System.out.println(entry.getValue().getHttpResponse().getStatus());
-                harEntries.add(createHarEntry(entry.getValue().getHttpRequest(),entry.getValue().getHttpResponse(), entry.getKey()));
             } catch (Exception e) {
                 log.error(e.getMessage() , e);
             }
