@@ -15,9 +15,11 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.Duration;
 import java.util.*;
 
 
@@ -51,7 +53,9 @@ public class AppTest {
         networkListener = new NetworkListener(driver, "har2.har");
         networkListener.start();
         driver.get("https://en.wiktionary.org/wiki/Wiktionary:Main_Page");
-        WebElement element = driver.findElement(By.id("searchInput"));
+        WebDriverWait webDriverWait = new WebDriverWait(driver, Duration.ofSeconds(30));
+        WebElement element =driver.findElement(By.id("searchInput"));
+        webDriverWait.until(webDriver -> element.isDisplayed());
         element.sendKeys("Kiwi/n");
         /**
          * Todo : https://www.browserstack.com/docs/automate/selenium/event-driven-testing#intercept-network ubah ChromeDriver jadi webdriver biasa , trus ganti devtoolsnya
@@ -115,14 +119,12 @@ public class AppTest {
         options.merge(capabilities);
         // Todo : Check Selenoid implementation https://github.com/SeleniumHQ/selenium/issues/9803#issuecomment-1015300383
         String seleniumUrl = Optional.ofNullable(System.getenv("SE_REMOTE_URL")).orElse("http://localhost:4444/wd/hub/");
-//        String seleniumUrl = "http://192.168.56.107:4444/wd/hub/";
         System.out.println("Running on Remote " + seleniumUrl);
         driver = new RemoteWebDriver(new URL(seleniumUrl), capabilities);
         // Todo : change to this one https://github.com/aerokube/chrome-developer-tools-protocol-java-example/blob/master/src/test/java/com/aerokube/selenoid/ChromeDevtoolsTest.java
         networkListener = new NetworkListener(driver, "har.har",Optional.ofNullable(System.getenv("SE_BASE_URL")).orElse("localhost:4444"));
         driver.get("https://en.wiktionary.org/wiki/Wiktionary:Main_Page");
         networkListener.start();
-//        driver = networkListener.getDriver();
         driver.get("https://en.wiktionary.org/wiki/Wiktionary:Main_Page");
         WebElement element = driver.findElement(By.id("searchInput"));
         element.sendKeys("Kiwi");
