@@ -1,7 +1,6 @@
 package com.blibli.oss.qa.util.services;
 
 import com.blibli.oss.qa.util.model.HarModel;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import de.sstoehr.harreader.model.*;
@@ -28,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 public class NetworkListener {
-    static final String targetPathFile = System.getProperty("user.dir") + "/target/";
+    static final String TARGET_PATH_FILE = System.getProperty("user.dir") + "/target/";
     private final ConcurrentHashMap<List<Long>, HarModel> harModelHashMap = new ConcurrentHashMap<>();
     private WebDriver driver;
     private String baseRemoteUrl;
@@ -53,6 +52,18 @@ public class NetworkListener {
         }
         createHarBrowser();
     }
+    public NetworkListener(WebDriver driver , DevTools devTools , String harFileName){
+        this.devTools = devTools;
+        this.driver = driver;
+        this.harFile = harFileName;
+        try {
+            Files.delete(java.nio.file.Paths.get(harFile));
+        } catch (IOException e) {
+            //ignored
+        }
+        createHarBrowser();
+    }
+
 
     /**
      * Generate new network listener object
@@ -98,17 +109,8 @@ public class NetworkListener {
 
     public void start() {
         // main listener to intercept response and continue
-        try {
-            if (driver instanceof RemoteWebDriver) {
-                this.devTools = getCdpUsingCustomurl();
-            } else {
-                this.devTools = ((HasDevTools) driver).getDevTools();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        devTools.createSession();
-        Filter reportStatusCodes = next -> req -> {
+        initializeCdp();
+        Filter filterResponses = next -> req -> {
             Long startTime = System.currentTimeMillis();
             // add trycatch
             HttpResponse res = next.execute(req);
@@ -116,7 +118,24 @@ public class NetworkListener {
             harModelHashMap.put(Lists.newArrayList(startTime, endTime), new HarModel(req, res));
             return res;
         };
-        NetworkInterceptor networkInterceptor = new NetworkInterceptor(driver, reportStatusCodes);
+        NetworkInterceptor networkInterceptor = new NetworkInterceptor(driver, filterResponses);
+    }
+
+    private void initializeCdp(){
+        if(this.devTools != null ){
+            devTools.createSessionIfThereIsNotOne();
+            return;
+        }
+        try {
+            if (driver instanceof RemoteWebDriver) {
+                this.devTools = getCdpUsingCustomurl();
+            } else {
+                this.devTools = ((HasDevTools) driver).getDevTools();
+            }
+            devTools.createSessionIfThereIsNotOne();
+        } catch (Exception e) {
+            log.error("CDP Can't be initialized " , e);
+        }
     }
 
     public DevTools getCdpUsingCustomurl() {
