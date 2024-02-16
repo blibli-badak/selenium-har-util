@@ -32,7 +32,7 @@ public class UsingCdpTest {
         setupLocalDriver();
         driver = new ChromeDriver(options);
         driver.manage().window().maximize();
-        networkListener = new NetworkListener(driver , driver.getDevTools(), "har2.har");
+        networkListener = new NetworkListener(driver , driver.getDevTools(), "har-with-cdp.har");
         networkListener.start();
         driver.get("https://en.wiktionary.org/wiki/Wiktionary:Main_Page");
         WebDriverWait webDriverWait = new WebDriverWait(driver, Duration.ofSeconds(30));

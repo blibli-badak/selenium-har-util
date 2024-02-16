@@ -48,7 +48,8 @@ public class NetworkListener {
         try {
             Files.delete(java.nio.file.Paths.get(harFile));
         } catch (IOException e) {
-            e.printStackTrace();
+            // Since it's expected to be failed , log level info is good
+            log.info("Not able to find prevous har file " + e.getMessage());
         }
         createHarBrowser();
     }
@@ -59,7 +60,8 @@ public class NetworkListener {
         try {
             Files.delete(java.nio.file.Paths.get(harFile));
         } catch (IOException e) {
-            e.printStackTrace();
+            // Since it's expected to be failed , log level info is good
+            log.info("Not able to find prevous har file " + e.getMessage());
         }
         createHarBrowser();
     }
@@ -79,7 +81,8 @@ public class NetworkListener {
         try {
             Files.delete(java.nio.file.Paths.get(harFile));
         } catch (IOException e) {
-            //ignored
+            // Since it's expected to be failed , log level info is good
+            log.info("Not able to find prevous har file " + e.getMessage());
         }
         createHarBrowser();
     }
