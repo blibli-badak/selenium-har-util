@@ -48,7 +48,7 @@ public class NetworkListener {
         try {
             Files.delete(java.nio.file.Paths.get(harFile));
         } catch (IOException e) {
-            //ignored
+            e.printStackTrace();
         }
         createHarBrowser();
     }
@@ -59,7 +59,7 @@ public class NetworkListener {
         try {
             Files.delete(java.nio.file.Paths.get(harFile));
         } catch (IOException e) {
-            //ignored
+            e.printStackTrace();
         }
         createHarBrowser();
     }
@@ -112,7 +112,6 @@ public class NetworkListener {
         initializeCdp();
         Filter filterResponses = next -> req -> {
             Long startTime = System.currentTimeMillis();
-            // add trycatch
             HttpResponse res = next.execute(req);
             Long endTime = System.currentTimeMillis();
             harModelHashMap.put(Lists.newArrayList(startTime, endTime), new HarModel(req, res));
