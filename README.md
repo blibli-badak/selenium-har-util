@@ -47,6 +47,10 @@ Integrate with our network listener
 ```java
 NetworkListener networkListener = new NetworkListener(driver, "har.har");
 ```
+Or if you already have existing CDP session you can use this one
+```java
+NetworkListener networkListener = new NetworkListener(driver, "Your Existing CDP Sessions","har.har" );
+```
 Start Capture your network request
 ```java
 networkListener.start();
