@@ -1,20 +1,29 @@
 package com.blibli.oss.qa.util.services;
 
 import com.blibli.oss.qa.util.model.HarModel;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.blibli.oss.qa.util.model.RequestResponseStorage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
-import de.sstoehr.harreader.model.*;
+import de.sstoehr.harreader.model.Har;
+import de.sstoehr.harreader.model.HarCreatorBrowser;
+import de.sstoehr.harreader.model.HarEntry;
+import de.sstoehr.harreader.model.HarLog;
+import de.sstoehr.harreader.model.HarPage;
+import de.sstoehr.harreader.model.HarPageTiming;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chromium.ChromiumDriver;
 import org.openqa.selenium.devtools.DevTools;
 import org.openqa.selenium.devtools.HasDevTools;
 import org.openqa.selenium.devtools.NetworkInterceptor;
+import org.openqa.selenium.devtools.v121.network.Network;
+import org.openqa.selenium.devtools.v121.network.model.Request;
+import org.openqa.selenium.devtools.v121.network.model.ResourceTiming;
+import org.openqa.selenium.devtools.v121.network.model.Response;
 import org.openqa.selenium.remote.Augmenter;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.remote.http.Filter;
-import org.openqa.selenium.remote.http.HttpRequest;
 import org.openqa.selenium.remote.http.HttpResponse;
 
 import java.io.BufferedReader;
@@ -23,12 +32,17 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 public class NetworkListener {
-    static final String targetPathFile = System.getProperty("user.dir") + "/target/";
+    static final String TARGET_PATH_FILE = System.getProperty("user.dir") + "/target/";
     private final ConcurrentHashMap<List<Long>, HarModel> harModelHashMap = new ConcurrentHashMap<>();
     private WebDriver driver;
     private String baseRemoteUrl;
@@ -36,6 +50,10 @@ public class NetworkListener {
     private String harFile = "";
 
     private HarCreatorBrowser harCreatorBrowser;
+
+    private final Map<String, RequestResponseStorage> windowHandleStorageMap = new HashMap<>();
+    private RequestResponseStorage requestResponseStorage;
+
 
     /**
      * Generate new network listener object
@@ -49,10 +67,25 @@ public class NetworkListener {
         try {
             Files.delete(java.nio.file.Paths.get(harFile));
         } catch (IOException e) {
-            //ignored
+            // Since it's expected to be failed , log level info is good
+            log.info("Not able to find prevous har file " + e.getMessage());
+        }
+        devTools = ((ChromiumDriver) driver).getDevTools();
+        createHarBrowser();
+    }
+    public NetworkListener(WebDriver driver , DevTools devTools , String harFileName){
+        this.devTools = devTools;
+        this.driver = driver;
+        this.harFile = harFileName;
+        try {
+            Files.delete(java.nio.file.Paths.get(harFile));
+        } catch (IOException e) {
+            // Since it's expected to be failed , log level info is good
+            log.info("Not able to find prevous har file " + e.getMessage());
         }
         createHarBrowser();
     }
+
 
     /**
      * Generate new network listener object
@@ -68,7 +101,8 @@ public class NetworkListener {
         try {
             Files.delete(java.nio.file.Paths.get(harFile));
         } catch (IOException e) {
-            //ignored
+            // Since it's expected to be failed , log level info is good
+            log.info("Not able to find prevous har file " + e.getMessage());
         }
         createHarBrowser();
     }
@@ -98,25 +132,57 @@ public class NetworkListener {
 
     public void start() {
         // main listener to intercept response and continue
+        initializeCdp();
+        Filter filterResponses = next -> req -> {
+            Long startTime = System.currentTimeMillis();
+            HttpResponse res = next.execute(req);
+            Long endTime = System.currentTimeMillis();
+            harModelHashMap.put(Lists.newArrayList(startTime, endTime), new HarModel(req, res));
+            return res;
+        };
+        NetworkInterceptor networkInterceptor = new NetworkInterceptor(driver, filterResponses);
+    }
+
+    public void start(String windowHandle) {
+        devTools.createSession(windowHandle);
+        devTools.send(Network.enable(Optional.empty(), Optional.empty(), Optional.empty()));
+        devTools.clearListeners();
+
+        requestResponseStorage = windowHandleStorageMap.get(windowHandle);
+        if (requestResponseStorage == null) {
+            requestResponseStorage = new RequestResponseStorage();
+            windowHandleStorageMap.put(windowHandle, requestResponseStorage);
+
+            devTools.addListener(Network.requestWillBeSent(), requestConsumer -> {
+                Request request = requestConsumer.getRequest();
+                requestResponseStorage.addRequest(request, new Date());
+            });
+
+            devTools.addListener(Network.responseReceived(), responseConsumer -> {
+                Response response = responseConsumer.getResponse();
+                String responseBody =
+                    devTools.send(Network.getResponseBody(responseConsumer.getRequestId()))
+                        .getBody();
+                requestResponseStorage.addResponse(response, responseBody);
+            });
+        }
+    }
+
+    private void initializeCdp(){
+        if(this.devTools != null ){
+            devTools.createSessionIfThereIsNotOne();
+            return;
+        }
         try {
             if (driver instanceof RemoteWebDriver) {
                 this.devTools = getCdpUsingCustomurl();
             } else {
                 this.devTools = ((HasDevTools) driver).getDevTools();
             }
+            devTools.createSessionIfThereIsNotOne();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("CDP Can't be initialized " , e);
         }
-        devTools.createSession();
-        Filter reportStatusCodes = next -> req -> {
-            Long startTime = System.currentTimeMillis();
-            // add trycatch
-            HttpResponse res = next.execute(req);
-            Long endTime = System.currentTimeMillis();
-            harModelHashMap.put(Lists.newArrayList(startTime, endTime), new HarModel(req, res));
-            return res;
-        };
-        NetworkInterceptor networkInterceptor = new NetworkInterceptor(driver, reportStatusCodes);
     }
 
     public DevTools getCdpUsingCustomurl() {
@@ -150,33 +216,72 @@ public class NetworkListener {
         this.driver = driver;
     }
 
-    public void createHarFile() {
-        createHarFile("");
+    public void switchWindow(String windowHandle) {
+        start(windowHandle);
+        driver.navigate().refresh();
     }
 
-    public void createHarFile(String filterString){
+    public void createHarFile() {
         Har har = new Har();
         HarLog harLog = new HarLog();
         harLog.setCreator(harCreatorBrowser);
         harLog.setBrowser(harCreatorBrowser);
         List<HarPage> harPages = new ArrayList<>();
         List<HarEntry> harEntries = new ArrayList<>();
-        // looping each harModelHashMap
-//        String firstKey = harModelHashMap.keySet().stream().min(String::compareTo).get();
-//        harPages.add(createHarPage(harModelHashMap.get(firstKey).getHttpRequest(), harModelHashMap.get(firstKey).getHttpResponse()));
-        for (Map.Entry<List<Long>, HarModel> entry : harModelHashMap.entrySet()) {
-            log.debug("Processing Har Entry   " + entry.getKey() + " Request URL "  + entry.getValue().getHttpRequest().getUri());
-            try {
-                if(entry.getValue().getHttpRequest().getUri().contains(filterString)){
-                    harEntries.add(createHarEntry(entry.getValue().getHttpRequest(),entry.getValue().getHttpResponse(), entry.getKey()));
+
+        windowHandleStorageMap.forEach((windowHandle, reqResStorage) -> {
+            harPages.add(createHarPage(windowHandle));
+            reqResStorage.getRequestResponsePairs().forEach(pair -> {
+                List<Long> time = new ArrayList<>();
+                if (pair.getResponse() != null) {
+                    pair.getResponse().getTiming().ifPresent(timing -> {
+                        time.add(pair.getRequestOn().getTime());
+                        time.add(timing.getReceiveHeadersEnd().longValue());
+                    });
+                    harEntries.add(createHarEntry(pair.getRequest(),
+                        pair.getResponse(),
+                        time,
+                        windowHandle,
+                        pair.getResponseBody()));
                 }
-//                System.out.println(entry.getValue().getHttpResponse().getStatus());
-            } catch (Exception e) {
-                log.error(e.getMessage() , e);
-            }
-        }
+            });
+        });
         log.info("har entry size : %d", harEntries.size());
         harLog.setPages(harPages);
+
+        harLog.setEntries(harEntries);
+        har.setLog(harLog);
+        createFile(har);
+    }
+
+    public void createHarFile(String filter) {
+        Har har = new Har();
+        HarLog harLog = new HarLog();
+        harLog.setCreator(harCreatorBrowser);
+        harLog.setBrowser(harCreatorBrowser);
+        List<HarPage> harPages = new ArrayList<>();
+        List<HarEntry> harEntries = new ArrayList<>();
+
+        windowHandleStorageMap.forEach((windowHandle, reqResStorage) -> {
+            harPages.add(createHarPage(windowHandle));
+            reqResStorage.getRequestResponsePairs().forEach(pair -> {
+                List<Long> time = new ArrayList<>();
+                if (pair.getRequest().getUrl().contains(filter) && pair.getResponse() != null) {
+                    pair.getResponse().getTiming().ifPresent(timing -> {
+                        time.add(pair.getRequestOn().getTime());
+                        time.add(timing.getReceiveHeadersEnd().longValue());
+                    });
+                    harEntries.add(createHarEntry(pair.getRequest(),
+                        pair.getResponse(),
+                        time,
+                        windowHandle,
+                        pair.getResponseBody()));
+                }
+            });
+        });
+        log.info("har entry size : %d", harEntries.size());
+        harLog.setPages(harPages);
+
         harLog.setEntries(harEntries);
         har.setLog(harLog);
         createFile(har);
@@ -200,20 +305,24 @@ public class NetworkListener {
         harCreatorBrowser.setComment("Created by HAR utils");
     }
 
-    public HarPage createHarPage(HttpRequest request , HttpResponse response) {
+    public HarPage createHarPage(String title) {
         HarPage harPage = new HarPage();
         harPage.setComment("Create by Har Utils");
         HarPageTiming harPageTiming = new HarPageTiming();
         harPageTiming.setOnContentLoad(0);
         harPage.setPageTimings(harPageTiming);
-//        harPage.setId("Page_" + counter);
         harPage.setStartedDateTime(new Date());
-        harPage.setTitle(request.getUri());
+        harPage.setId(title);
         return harPage;
     }
 
-    public HarEntry createHarEntry(HttpRequest httpRequest, HttpResponse httpResponse, List<Long> time) {
-        HarEntryConverter harEntry = new HarEntryConverter(httpRequest, httpResponse, time);
+    public HarEntry createHarEntry(Request request,
+        Response response,
+        List<Long> time,
+        String pagref,
+        String responseBody) {
+        HarEntryConverter harEntry =
+            new HarEntryConverter(request, response, time, pagref, responseBody);
         harEntry.setup();
         return harEntry.getHarEntry();
     }
