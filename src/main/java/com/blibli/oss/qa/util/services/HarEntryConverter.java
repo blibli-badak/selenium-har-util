@@ -1,8 +1,16 @@
 package com.blibli.oss.qa.util.services;
 
-import de.sstoehr.harreader.model.*;
-import org.openqa.selenium.remote.http.HttpRequest;
-import org.openqa.selenium.remote.http.HttpResponse;
+import de.sstoehr.harreader.model.HarContent;
+import de.sstoehr.harreader.model.HarEntry;
+import de.sstoehr.harreader.model.HarHeader;
+import de.sstoehr.harreader.model.HarPostData;
+import de.sstoehr.harreader.model.HarRequest;
+import de.sstoehr.harreader.model.HarResponse;
+import de.sstoehr.harreader.model.HarTiming;
+import de.sstoehr.harreader.model.HttpMethod;
+import org.openqa.selenium.devtools.v121.network.model.Request;
+import org.openqa.selenium.devtools.v121.network.model.ResourceTiming;
+import org.openqa.selenium.devtools.v121.network.model.Response;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,20 +20,34 @@ import java.util.List;
 import java.util.Optional;
 
 public class HarEntryConverter {
-    private HttpRequest httpRequest;
-    private HttpResponse httpResponse;
-    private final HarEntry harEntry;
-    private final long startTime;
-    private final long endTime;
+  private final Request request;
+  private final Response response;
+  private final HarEntry harEntry;
+  private final long startTime;
+  private final String pageRef;
+  private final String responseBody;
+  private long endTime = 0;
+  private Optional<ResourceTiming> timing;
 
-    private final String CONTENT_TYPE = "Content-Type";
-
-    public HarEntryConverter(HttpRequest httpRequest, HttpResponse httpResponse , List<Long> time) {
-        harEntry = new HarEntry();
-        this.httpRequest = httpRequest;
-        this.httpResponse = httpResponse;
-        this.startTime = time.get(0);
-        this.endTime = time.get(1);
+  public HarEntryConverter(Request request,
+      Response response,
+      List<Long> time,
+      String pageRef,
+      String responseBody) {
+      harEntry = new HarEntry();
+      this.request = request;
+      this.startTime = time.get(0);
+      this.response = response;
+      this.responseBody = responseBody;
+      if (response != null) {
+        this.timing = response.getTiming();
+        if (timing.isPresent()) {
+          ResourceTiming resourceTiming = timing.get();
+          Number receiveHeadersEnd = resourceTiming.getReceiveHeadersEnd();
+          this.endTime = time.get(0) + receiveHeadersEnd.longValue();
+        }
+      }
+      this.pageRef = pageRef;
     }
 
     public void setup() {
@@ -33,26 +55,29 @@ public class HarEntryConverter {
         harEntry.setStartedDateTime(new Date(startTime));
         harEntry.setTime((int) (endTime - startTime));
         harEntry.setRequest(convertHarRequest());
-        harEntry.setResponse(convertHarResponse());
+        if (response != null) {
+          harEntry.setResponse(convertHarResponse());
+        }
         harEntry.setTimings(convertHarTiming());
-        harEntry.setPageref("Page"); // TODO: change to pageref
+       harEntry.setPageref(pageRef);
     }
 
     public HarTiming convertHarTiming() {
         HarTiming harTiming = new HarTiming();
-        harTiming.setBlocked(0);
-        harTiming.setDns(0);
-        harTiming.setConnect(0);
-        harTiming.setSend(0);
-        harTiming.setWait(0);
-        harTiming.setReceive(0);
+        harTiming.setDns(timing.get().getDnsStart().intValue());
+        harTiming.setConnect(timing.get().getConnectStart().intValue());
+        harTiming.setSend(timing.get().getSendStart().intValue());
+        harTiming.setWait(
+            timing.get().getSendEnd().intValue() - timing.get().getSendStart().intValue());
+        harTiming.setReceive(
+            timing.get().getReceiveHeadersEnd().intValue() - timing.get().getSendEnd().intValue());
         return harTiming;
     }
 
     private HarResponse convertHarResponse() {
         HarResponse harResponse = new HarResponse();
-        harResponse.setStatus(httpResponse.getStatus());
-        harResponse.setStatusText((httpResponse.isSuccessful() ? "OK" : "FAILED"));
+        harResponse.setStatus(response.getStatus());
+        harResponse.setStatusText(response.getStatusText());
         harResponse.setHttpVersion("HTTP/1.1");
         harResponse.setRedirectURL("");
         harResponse.setHeaders(convertHarHeadersResponse());
@@ -74,24 +99,18 @@ public class HarEntryConverter {
 
     private HarContent setHarContentResponse() {
         HarContent harContent = new HarContent();
-        try {
-            harContent.setSize((long) httpResponse.getContent().get().available());
-        } catch (IOException e) {
-            e.printStackTrace();
-            harContent.setSize(0L);
-        }
-        harContent.setText(convertInputStreamtoString(httpResponse.getContent().get()));
-        harContent.setMimeType(Optional.ofNullable(httpResponse.getHeader(CONTENT_TYPE)).orElse("").equals("")? "application/x-www-form-urlencoded" : httpResponse.getHeader(CONTENT_TYPE));
-
+        harContent.setSize((long) response.getEncodedDataLength());
+        harContent.setText(responseBody);
+        harContent.setMimeType(response.getMimeType());
         return harContent;
     }
 
     private List<HarHeader> convertHarHeadersResponse() {
         List<HarHeader> harHeaders = new java.util.ArrayList<>();
-        httpResponse.getHeaderNames().forEach(s -> {
+        response.getHeaders().forEach((key, value) -> {
             HarHeader harHeader = new HarHeader();
-            harHeader.setName(s);
-            harHeader.setValue(httpResponse.getHeader(s));
+            harHeader.setName(key);
+            harHeader.setValue(value.toString());
             harHeaders.add(harHeader);
         });
         return harHeaders;
@@ -99,33 +118,17 @@ public class HarEntryConverter {
 
     public HarRequest convertHarRequest() {
         HarRequest harRequest = new HarRequest();
-        harRequest.setMethod(HttpMethod.valueOf(httpRequest.getMethod().toString()));
-        harRequest.setUrl(httpRequest.getUri());
+        harRequest.setMethod(HttpMethod.valueOf(request.getMethod()));
+        harRequest.setUrl(request.getUrl());
         harRequest.setComment("");
         harRequest.setHttpVersion("HTTP/1.1");
-        try {
-            harRequest.setBodySize((long) httpRequest.getContent().get().available());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         HarPostData harPostData = new HarPostData();
-        harPostData.setText(convertInputStreamtoString(httpRequest.getContent().get()));
-        List<HarPostDataParam> harPostDataParams = new ArrayList<>();
-        httpRequest.getQueryParameterNames().forEach(s -> {
-            HarPostDataParam harPostDataParam = new HarPostDataParam();
-            harPostDataParam.setName(s);
-            harPostDataParam.setValue(httpRequest.getQueryParameter(s));
-            harPostDataParams.add(harPostDataParam);
-        });
-        harPostData.setParams(harPostDataParams);
-        harPostData.setMimeType((Optional.ofNullable(httpRequest.getHeader(CONTENT_TYPE)).orElse("").equalsIgnoreCase("") ? "application/x-www-form-urlencoded" : httpRequest.getHeader(CONTENT_TYPE)));
         harRequest.setPostData(harPostData);
-        harRequest.setAdditionalField("content", httpRequest.getContent());
         List<HarHeader> headers = new ArrayList<>();
-        httpRequest.getHeaderNames().forEach(h -> {
+        request.getHeaders().entrySet().forEach(entry -> {
             HarHeader header = new HarHeader();
-            header.setName(h);
-            header.setValue(httpRequest.getHeader(h));
+            header.setName(entry.getKey());
+            header.setValue(entry.getValue().toString());
             headers.add(header);
         });
         harRequest.setHeaders(headers);
