@@ -132,18 +132,20 @@ public class NetworkListener {
 
     public void start() {
         // main listener to intercept response and continue
-        initializeCdp();
-        Filter filterResponses = next -> req -> {
-            Long startTime = System.currentTimeMillis();
-            HttpResponse res = next.execute(req);
-            Long endTime = System.currentTimeMillis();
-            harModelHashMap.put(Lists.newArrayList(startTime, endTime), new HarModel(req, res));
-            return res;
-        };
-        NetworkInterceptor networkInterceptor = new NetworkInterceptor(driver, filterResponses);
+//        initializeCdp();
+//        Filter filterResponses = next -> req -> {
+//            Long startTime = System.currentTimeMillis();
+//            HttpResponse res = next.execute(req);
+//            Long endTime = System.currentTimeMillis();
+//            harModelHashMap.put(Lists.newArrayList(startTime, endTime), new HarModel(req, res));
+//            return res;
+//        };
+//        NetworkInterceptor networkInterceptor = new NetworkInterceptor(driver, filterResponses);
+        start(driver.getWindowHandle());
     }
 
     public void start(String windowHandle) {
+        initializeCdp();
         devTools.createSession(windowHandle);
         devTools.send(Network.enable(Optional.empty(), Optional.empty(), Optional.empty()));
         devTools.clearListeners();
