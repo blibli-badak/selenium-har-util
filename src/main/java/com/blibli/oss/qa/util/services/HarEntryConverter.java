@@ -20,34 +20,37 @@ import java.util.List;
 import java.util.Optional;
 
 public class HarEntryConverter {
-  private final Request request;
-  private final Response response;
-  private final HarEntry harEntry;
-  private final long startTime;
-  private final String pageRef;
-  private final String responseBody;
-  private long endTime = 0;
-  private Optional<ResourceTiming> timing;
+    private final Request request;
+    private final Response response;
+    private final HarEntry harEntry;
+    private final long startTime;
+    private final String pageRef;
+    private final String responseBody;
+    private long endTime = 0;
+    private Optional<ResourceTiming> timing;
 
-  public HarEntryConverter(Request request,
-      Response response,
-      List<Long> time,
-      String pageRef,
-      String responseBody) {
-      harEntry = new HarEntry();
-      this.request = request;
-      this.startTime = time.get(0);
-      this.response = response;
-      this.responseBody = responseBody;
-      if (response != null) {
-        this.timing = response.getTiming();
-        if (timing.isPresent()) {
-          ResourceTiming resourceTiming = timing.get();
-          Number receiveHeadersEnd = resourceTiming.getReceiveHeadersEnd();
-          this.endTime = time.get(0) + receiveHeadersEnd.longValue();
+    public HarEntryConverter(Request request,
+                             Response response,
+                             List<Long> time,
+                             String pageRef,
+                             String responseBody) {
+        if (time.size() == 0) {
+            time.add(0L);
         }
-      }
-      this.pageRef = pageRef;
+        harEntry = new HarEntry();
+        this.request = request;
+        this.startTime = time.get(0);
+        this.response = response;
+        this.responseBody = responseBody;
+        if (response != null) {
+            this.timing = response.getTiming();
+            if (timing.isPresent()) {
+                ResourceTiming resourceTiming = timing.get();
+                Number receiveHeadersEnd = resourceTiming.getReceiveHeadersEnd();
+                this.endTime = time.get(0) + receiveHeadersEnd.longValue();
+            }
+        }
+        this.pageRef = pageRef;
     }
 
     public void setup() {
@@ -56,21 +59,24 @@ public class HarEntryConverter {
         harEntry.setTime((int) (endTime - startTime));
         harEntry.setRequest(convertHarRequest());
         if (response != null) {
-          harEntry.setResponse(convertHarResponse());
+            harEntry.setResponse(convertHarResponse());
         }
         harEntry.setTimings(convertHarTiming());
-       harEntry.setPageref(pageRef);
+        harEntry.setPageref(pageRef);
     }
 
     public HarTiming convertHarTiming() {
         HarTiming harTiming = new HarTiming();
+        if (timing.isEmpty()) {
+            return harTiming;
+        }
         harTiming.setDns(timing.get().getDnsStart().intValue());
         harTiming.setConnect(timing.get().getConnectStart().intValue());
         harTiming.setSend(timing.get().getSendStart().intValue());
         harTiming.setWait(
-            timing.get().getSendEnd().intValue() - timing.get().getSendStart().intValue());
+                timing.get().getSendEnd().intValue() - timing.get().getSendStart().intValue());
         harTiming.setReceive(
-            timing.get().getReceiveHeadersEnd().intValue() - timing.get().getSendEnd().intValue());
+                timing.get().getReceiveHeadersEnd().intValue() - timing.get().getSendEnd().intValue());
         return harTiming;
     }
 
@@ -84,12 +90,13 @@ public class HarEntryConverter {
         harResponse.setContent(setHarContentResponse());
         return harResponse;
     }
-    private String convertInputStreamtoString(InputStream inputStream){
+
+    private String convertInputStreamtoString(InputStream inputStream) {
         StringBuilder stringBuilder = new StringBuilder();
         try {
             int read;
             while ((read = inputStream.read()) != -1) {
-                stringBuilder.append((char)read);
+                stringBuilder.append((char) read);
             }
         } catch (IOException e) {
             e.printStackTrace();
