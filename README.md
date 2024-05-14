@@ -32,7 +32,7 @@ And then add the maven dependency same with the lattest version in jitpack [![](
         <dependency>
             <groupId>com.github.blibli-badak</groupId>
             <artifactId>selenium-har-util</artifactId>
-            <version>1.0.9</version>
+            <version>1.1.1</version>
         </dependency>
 ```
 
@@ -46,6 +46,10 @@ driver = new ChromeDriver(options);
 Integrate with our network listener
 ```java
 NetworkListener networkListener = new NetworkListener(driver, "har.har");
+```
+Or if you already have existing CDP session you can use this one (Starting from version 1.1.1)
+```java
+NetworkListener networkListener = new NetworkListener(driver, "Your Existing CDP Sessions","har.har" );
 ```
 Start Capture your network request
 ```java

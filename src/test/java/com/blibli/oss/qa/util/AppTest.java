@@ -53,7 +53,7 @@ public class AppTest {
         setupLocalDriver();
         driver = new ChromeDriver(options);
         driver.manage().window().maximize();
-        networkListener = new NetworkListener(driver, "har2.har");
+        networkListener = new NetworkListener(driver, "har-local-driver.har");
         networkListener.start();
         driver.get("https://en.wiktionary.org/wiki/Wiktionary:Main_Page");
         WebDriverWait webDriverWait = new WebDriverWait(driver, Duration.ofSeconds(30));
@@ -85,7 +85,7 @@ public class AppTest {
     public void testWithOpenNewTab(){
         setupLocalDriver();
         driver = new ChromeDriver(options);
-        networkListener = new NetworkListener(driver,"har.har");
+        networkListener = new NetworkListener(driver,"har-new-tab.har");
         networkListener.start();
         driver.manage().window().maximize();
         driver.get("http://gosoft.web.id/selenium/");
@@ -95,7 +95,7 @@ public class AppTest {
         driver.switchTo().window(tabs2.get(1));
         networkListener.start();
         driver.navigate().refresh();
-        System.out.println("Lalalala");
+        System.out.println("Completed test new Tab");
     }
 
     @Test
@@ -123,7 +123,7 @@ public class AppTest {
         networkListener.start();
         driver.manage().window().maximize();
         driver.get("http://gosoft.web.id/error-not-found/");
-        System.out.println("Lalalala");
+        System.out.println("Completed test not found");
     }
 
 //    @Test
