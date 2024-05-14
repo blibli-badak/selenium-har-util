@@ -20,7 +20,10 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 
 /**
@@ -94,6 +97,23 @@ public class AppTest {
         driver.navigate().refresh();
         System.out.println("Completed test new Tab");
     }
+
+    @Test
+    public void seleniumTest() {
+        setupLocalDriver();
+        driver = new ChromeDriver(options);
+        networkListener = new NetworkListener(driver, "har-new-tab.har");
+        networkListener.start(driver.getWindowHandle());
+        driver.get("http://gosoft.web.id/selenium/");
+        WebElement linkNewTab = driver.findElement(By.id("new-tab"));
+        linkNewTab.click();
+        ArrayList<String> tabs2 = new ArrayList<>(driver.getWindowHandles());
+        driver.switchTo().window(tabs2.get(1));
+        networkListener.switchWindow(driver.getWindowHandle());
+
+        driver.quit();
+    }
+
 
     @Test
     public void testNotFound(){
