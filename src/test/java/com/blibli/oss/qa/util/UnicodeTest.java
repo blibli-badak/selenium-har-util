@@ -34,6 +34,7 @@ public class UnicodeTest extends BaseTest {
         }
         Thread.sleep(1000); // make sure the file are written
         String harFile = this.readHarData(HAR_UNICODE_NAME);
+        System.out.println(harFile);
         assertTrue(harFile.contains("接口路径不存在 请前往"));
     }
 
