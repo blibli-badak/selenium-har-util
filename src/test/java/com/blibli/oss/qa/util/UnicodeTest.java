@@ -27,7 +27,7 @@ public class UnicodeTest extends BaseTest {
         networkListener.setCharset("UTF-8");
         networkListener.start();
         driver.get("https://gosoft.web.id/selenium/hotlist.php");
-        Thread.sleep(1000); // make sure the web are loaded
+        Thread.sleep(5000); // make sure the web are loaded
         networkListener.createHarFile();
         if (driver!=null){
             driver.close();
