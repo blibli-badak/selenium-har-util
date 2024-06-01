@@ -18,10 +18,25 @@ import java.util.Optional;
 
 public class UsingCdpTest  extends BaseTest{
 
+    private NetworkListener networkListener;
+    private ChromeDriver driver;
+    private ChromeOptions options;
+    private DesiredCapabilities capabilities;
 
-    @BeforeEach
-    public void setup() {
+    public void setupLocalDriver(){
+        options = new ChromeOptions();
+        options.addArguments("--no-sandbox");
+        options.addArguments("--remote-allow-origins=*");
+        options.addArguments("--disable-dev-shm-usage");
+        if(Optional.ofNullable(System.getenv("CHROME_MODE")).orElse("").equalsIgnoreCase("headless")){
+            options.addArguments("--headless");
+            System.out.println("Running With headless mode");
+        }else{
+            System.out.println("Running Without headless mode");
+        }
+        WebDriverManager.chromedriver().setup();
     }
+
 
     @Test
     public void testWithLocalDriver() {

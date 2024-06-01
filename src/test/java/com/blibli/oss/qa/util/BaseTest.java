@@ -14,24 +14,7 @@ import java.util.Optional;
 
 public class BaseTest {
 
-    public ChromeDriver driver;
-    public NetworkListener networkListener;
-    public ChromeOptions options;
-    public DesiredCapabilities capabilities;
 
-    public void setupLocalDriver(){
-        options = new ChromeOptions();
-        options.addArguments("--no-sandbox");
-        options.addArguments("--remote-allow-origins=*");
-        options.addArguments("--disable-dev-shm-usage");
-        if(Optional.ofNullable(System.getenv("CHROME_MODE")).orElse("").equalsIgnoreCase("headless")){
-            options.addArguments("--headless");
-            System.out.println("Running With headless mode");
-        }else{
-            System.out.println("Running Without headless mode");
-        }
-        WebDriverManager.chromedriver().setup();
-    }
 
     public String readHarData(String fileName) throws IOException {
         String harFile = Paths.get(".").toAbsolutePath().normalize().toString() + ""+File.separator +""+fileName;
