@@ -33,4 +33,4 @@ jobs:
     - name: test chrome
       run: chrome --version
     - name: Build with Maven
-      run: mvn -B clean verify --file pom.xml -s $GITHUB_WORKSPACE/settings.xml
+      run: mvn -B clean verify --file pom.xml -s $GITHUB_WORKSPACE/settings.xml -Dfile.encoding=UTF-8
