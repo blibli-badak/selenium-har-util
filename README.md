@@ -51,6 +51,13 @@ Or if you already have existing CDP session you can use this one (Starting from 
 ```java
 NetworkListener networkListener = new NetworkListener(driver, "Your Existing CDP Sessions","har.har" );
 ```
+[Optional] Setup the Default Charset (since 1.3.0)
+
+This is used for unicode support like chinese or japanese character, reffer to this for the value https://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html
+```java
+networkListener.setCharset("UTF-8");
+```
+
 Start Capture your network request
 ```java
 networkListener.start();

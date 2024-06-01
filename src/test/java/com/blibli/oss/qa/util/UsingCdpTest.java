@@ -16,15 +16,11 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import java.time.Duration;
 import java.util.Optional;
 
-public class UsingCdpTest {
+public class UsingCdpTest  extends BaseTest{
 
-    private ChromeDriver driver;
-    private NetworkListener networkListener;
-    private ChromeOptions options;
-    private DesiredCapabilities capabilities;
+
     @BeforeEach
     public void setup() {
-        options = new ChromeOptions();
     }
 
     @Test
@@ -39,19 +35,6 @@ public class UsingCdpTest {
         WebElement element =driver.findElement(By.id("searchInput"));
         webDriverWait.until(webDriver -> element.isDisplayed());
         element.sendKeys("Kiwi/n");
-    }
-
-    private void setupLocalDriver(){
-        options.addArguments("--no-sandbox");
-        options.addArguments("--remote-allow-origins=*");
-        options.addArguments("--disable-dev-shm-usage");
-        if(Optional.ofNullable(System.getenv("CHROME_MODE")).orElse("").equalsIgnoreCase("headless")){
-            options.addArguments("--headless");
-            System.out.println("Running With headless mode");
-        }else{
-            System.out.println("Running Without headless mode");
-        }
-        WebDriverManager.chromedriver().setup();
     }
 
     @AfterEach

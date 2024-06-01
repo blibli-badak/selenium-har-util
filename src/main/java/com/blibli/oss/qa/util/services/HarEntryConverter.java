@@ -8,9 +8,9 @@ import de.sstoehr.harreader.model.HarRequest;
 import de.sstoehr.harreader.model.HarResponse;
 import de.sstoehr.harreader.model.HarTiming;
 import de.sstoehr.harreader.model.HttpMethod;
-import org.openqa.selenium.devtools.v121.network.model.Request;
-import org.openqa.selenium.devtools.v121.network.model.ResourceTiming;
-import org.openqa.selenium.devtools.v121.network.model.Response;
+import org.openqa.selenium.devtools.v125.network.model.Request;
+import org.openqa.selenium.devtools.v125.network.model.ResourceTiming;
+import org.openqa.selenium.devtools.v125.network.model.Response;
 
 import java.io.IOException;
 import java.io.InputStream;
