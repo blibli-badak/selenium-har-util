@@ -34,7 +34,7 @@ public class BaseTest {
     }
 
     public String readHarData(String fileName) throws IOException {
-        String harFile = Paths.get(".").toAbsolutePath().normalize().toString() + ""+File.pathSeparatorChar +""+fileName;
+        String harFile = Paths.get(".").toAbsolutePath().normalize().toString() + ""+File.separator +""+fileName;
         System.out.println("Read Har Data " + harFile);
         return new String(Files.readAllBytes(Paths.get(fileName)));
     }
