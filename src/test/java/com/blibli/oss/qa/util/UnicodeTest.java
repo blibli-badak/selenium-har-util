@@ -49,10 +49,10 @@ public class UnicodeTest extends BaseTest {
         networkListener.start();
         driver.get("http://gosoft.web.id/selenium/unicode.html");
         Thread.sleep(5000); // make sure the web are loaded
-        networkListener.createHarFile();
         if (driver!=null){
             driver.close();
         }
+        networkListener.createHarFile();
         Thread.sleep(1000); // make sure the file are written
         String harFile = this.readHarData(HAR_UNICODE_NAME);
         System.out.println(harFile);
