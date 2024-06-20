@@ -47,7 +47,7 @@ public class UnicodeTest extends BaseTest {
         networkListener = new NetworkListener(driver, driver.getDevTools(), HAR_UNICODE_NAME);
         networkListener.setCharset("UTF-8");
         networkListener.start();
-        driver.get("http://gosoft.web.id/selenium/hotlist.php");
+        driver.get("http://gosoft.web.id/selenium/unicode.html");
         Thread.sleep(5000); // make sure the web are loaded
         networkListener.createHarFile();
         if (driver!=null){
