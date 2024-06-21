@@ -1,9 +1,9 @@
 package com.blibli.oss.qa.util.services;
 
+import com.blibli.oss.qa.util.model.Constant;
 import com.blibli.oss.qa.util.model.HarModel;
 import com.blibli.oss.qa.util.model.RequestResponseStorage;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
 import de.sstoehr.harreader.model.Har;
 import de.sstoehr.harreader.model.HarCreatorBrowser;
 import de.sstoehr.harreader.model.HarEntry;
@@ -16,15 +16,11 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chromium.ChromiumDriver;
 import org.openqa.selenium.devtools.DevTools;
 import org.openqa.selenium.devtools.HasDevTools;
-import org.openqa.selenium.devtools.NetworkInterceptor;
-import org.openqa.selenium.devtools.v121.network.Network;
-import org.openqa.selenium.devtools.v121.network.model.Request;
-import org.openqa.selenium.devtools.v121.network.model.ResourceTiming;
-import org.openqa.selenium.devtools.v121.network.model.Response;
+import org.openqa.selenium.devtools.v125.network.Network;
+import org.openqa.selenium.devtools.v125.network.model.Request;
+import org.openqa.selenium.devtools.v125.network.model.Response;
 import org.openqa.selenium.remote.Augmenter;
 import org.openqa.selenium.remote.RemoteWebDriver;
-import org.openqa.selenium.remote.http.Filter;
-import org.openqa.selenium.remote.http.HttpResponse;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -48,6 +44,7 @@ public class NetworkListener {
     private String baseRemoteUrl;
     private DevTools devTools;
     private String harFile = "";
+    private String charset = Constant.DEFAULT_UNICODE;
 
     private HarCreatorBrowser harCreatorBrowser;
 
@@ -250,7 +247,6 @@ public class NetworkListener {
         });
         log.info("har entry size : %d", harEntries.size());
         harLog.setPages(harPages);
-
         harLog.setEntries(harEntries);
         har.setLog(harLog);
         createFile(har);
@@ -289,15 +285,23 @@ public class NetworkListener {
         createFile(har);
     }
 
-    public void createFile(Har har) {
+    private void createFile(Har har) {
         ObjectMapper om = new ObjectMapper();
         try {
-            String json = om.writeValueAsString(har);
+            String json = new String(om.writeValueAsString(har).getBytes(), charset);
             // write json to file
             Files.write(java.nio.file.Paths.get(harFile), json.getBytes());
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Setup Charset on the file generation
+     * @param charset default will be UTF-8 , you can get from here https://docs.oracle.com/javase/8/docs/api/java/nio/charset/Charset.html
+     */
+    public void setCharset(String charset){
+        this.charset = charset;
     }
 
     private void createHarBrowser() {

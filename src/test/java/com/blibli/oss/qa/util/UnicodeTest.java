@@ -5,24 +5,26 @@ import io.github.bonigarcia.wdm.WebDriverManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
-import org.openqa.selenium.support.ui.WebDriverWait;
 
-import java.time.Duration;
+import java.io.IOException;
 import java.util.Optional;
 
-public class UsingCdpTest  extends BaseTest{
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+public class UnicodeTest extends BaseTest {
     private NetworkListener networkListener;
+    private static String HAR_UNICODE_NAME = "har-unicode.har";
     private ChromeDriver driver;
     private ChromeOptions options;
     private DesiredCapabilities capabilities;
 
+    @BeforeEach
+    public void setup() {
+        this.setupLocalDriver();
+    }
     public void setupLocalDriver(){
         options = new ChromeOptions();
         options.addArguments("--no-sandbox");
@@ -39,28 +41,20 @@ public class UsingCdpTest  extends BaseTest{
 
 
     @Test
-    public void testWithLocalDriver() {
-        setupLocalDriver();
+    public void testUnicode() throws InterruptedException, IOException {
         driver = new ChromeDriver(options);
         driver.manage().window().maximize();
-        networkListener = new NetworkListener(driver , driver.getDevTools(), "har-with-cdp.har");
+        networkListener = new NetworkListener(driver, driver.getDevTools(), HAR_UNICODE_NAME);
+        networkListener.setCharset("UTF-8");
         networkListener.start();
-        driver.get("https://en.wiktionary.org/wiki/Wiktionary:Main_Page");
-        WebDriverWait webDriverWait = new WebDriverWait(driver, Duration.ofSeconds(30));
-        WebElement element =driver.findElement(By.id("searchInput"));
-        webDriverWait.until(webDriver -> element.isDisplayed());
-        element.sendKeys("Kiwi/n");
-    }
-
-    @AfterEach
-    public void tearDown() {
+        driver.get("https://gosoft.web.id/selenium/unicode.html");
+        Thread.sleep(5000); // make sure the web are loaded
         driver.quit();
         try {
             Thread.sleep(2000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        networkListener.createHarFile();
         // in the github actions we need add some wait , because chrome exited too slow ,
         // so when we create new session previous chrome is not closed completly
         try {
@@ -68,5 +62,11 @@ public class UsingCdpTest  extends BaseTest{
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+        networkListener.createHarFile();
+        String harFile = this.readHarData(HAR_UNICODE_NAME);
+        System.out.println(harFile);
+        assertTrue(harFile.contains("接口路径不存在 请前往"));
     }
+
+
 }

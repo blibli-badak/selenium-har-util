@@ -2,8 +2,9 @@ package com.blibli.oss.qa.util.model;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.openqa.selenium.devtools.v121.network.model.Request;
-import org.openqa.selenium.devtools.v121.network.model.Response;
+import org.openqa.selenium.devtools.v125.network.model.Request;
+import org.openqa.selenium.devtools.v125.network.model.Response;
+
 
 import java.util.Date;
 
