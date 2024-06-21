@@ -249,7 +249,6 @@ public class NetworkListener {
         harLog.setPages(harPages);
         harLog.setEntries(harEntries);
         har.setLog(harLog);
-        System.out.println(harEntries);
         createFile(har);
     }
 
