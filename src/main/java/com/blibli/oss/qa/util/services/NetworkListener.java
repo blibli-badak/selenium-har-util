@@ -247,9 +247,9 @@ public class NetworkListener {
         });
         log.info("har entry size : %d", harEntries.size());
         harLog.setPages(harPages);
-
         harLog.setEntries(harEntries);
         har.setLog(harLog);
+        System.out.println(harEntries);
         createFile(har);
     }
 
@@ -304,8 +304,6 @@ public class NetworkListener {
     public void setCharset(String charset){
         this.charset = charset;
     }
-
-
 
     private void createHarBrowser() {
         harCreatorBrowser = new HarCreatorBrowser();

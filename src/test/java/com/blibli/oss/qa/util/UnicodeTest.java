@@ -55,7 +55,6 @@ public class UnicodeTest extends BaseTest {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        networkListener.createHarFile();
         // in the github actions we need add some wait , because chrome exited too slow ,
         // so when we create new session previous chrome is not closed completly
         try {
@@ -63,6 +62,7 @@ public class UnicodeTest extends BaseTest {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+        networkListener.createHarFile();
         String harFile = this.readHarData(HAR_UNICODE_NAME);
         System.out.println(harFile);
         assertTrue(harFile.contains("接口路径不存在 请前往"));
