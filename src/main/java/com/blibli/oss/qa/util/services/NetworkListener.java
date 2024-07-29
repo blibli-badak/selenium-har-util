@@ -242,6 +242,13 @@ public class NetworkListener {
                         time,
                         windowHandle,
                         pair.getResponseBody()));
+                } else {
+                    log.info("Response is null for %s", pair.getRequest().getUrl());
+                    harEntries.add(createHarEntry(pair.getRequest(),
+                        null,
+                        time,
+                        windowHandle,
+                        null));
                 }
             });
         });
