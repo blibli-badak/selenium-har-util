@@ -67,7 +67,7 @@ public class HarEntryConverter {
 
     public HarTiming convertHarTiming() {
         HarTiming harTiming = new HarTiming();
-        if (timing.isEmpty()) {
+        if (timing == null || timing.isEmpty()) {
             return harTiming;
         }
         harTiming.setDns(timing.get().getDnsStart().intValue());
