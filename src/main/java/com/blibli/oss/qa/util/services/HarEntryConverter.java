@@ -60,6 +60,8 @@ public class HarEntryConverter {
         harEntry.setRequest(convertHarRequest());
         if (response != null) {
             harEntry.setResponse(convertHarResponse());
+        } else {
+            harEntry.setResponse(emptyHarResponse());
         }
         harEntry.setTimings(convertHarTiming());
         harEntry.setPageref(pageRef);
@@ -68,6 +70,11 @@ public class HarEntryConverter {
     public HarTiming convertHarTiming() {
         HarTiming harTiming = new HarTiming();
         if (timing == null || timing.isEmpty()) {
+            harTiming.setDns(-1);
+            harTiming.setConnect(-1);
+            harTiming.setSend(-1);
+            harTiming.setWait(-1);
+            harTiming.setReceive(-1);
             return harTiming;
         }
         harTiming.setDns(timing.get().getDnsStart().intValue());
@@ -91,6 +98,17 @@ public class HarEntryConverter {
         return harResponse;
     }
 
+    private HarResponse emptyHarResponse() {
+        HarResponse harResponse = new HarResponse();
+        harResponse.setStatus(0);
+        harResponse.setStatusText("");
+        harResponse.setHttpVersion("HTTP/1.1");
+        harResponse.setRedirectURL("");
+        harResponse.setHeaders(new ArrayList<>());
+        harResponse.setContent(setEmptyHarContentResponse());
+        return harResponse;
+    }
+
     private String convertInputStreamtoString(InputStream inputStream) {
         StringBuilder stringBuilder = new StringBuilder();
         try {
@@ -109,6 +127,13 @@ public class HarEntryConverter {
         harContent.setSize((long) response.getEncodedDataLength());
         harContent.setText(responseBody);
         harContent.setMimeType(response.getMimeType());
+        return harContent;
+    }
+
+    private HarContent setEmptyHarContentResponse() {
+        HarContent harContent = new HarContent();
+        harContent.setSize((long) 0);
+        harContent.setMimeType("text/plain");
         return harContent;
     }
 
