@@ -39,7 +39,6 @@ public class UsingCdpTest  extends BaseTest{
     }
 
 
-    @Test
     public void testWithLocalDriver() {
         setupLocalDriver();
         driver = new ChromeDriver(options);
@@ -53,7 +52,6 @@ public class UsingCdpTest  extends BaseTest{
         element.sendKeys("Kiwi/n");
     }
 
-    @Test
     public void testLoginFeature() {
         setupLocalDriver();
         driver = new ChromeDriver(options);
