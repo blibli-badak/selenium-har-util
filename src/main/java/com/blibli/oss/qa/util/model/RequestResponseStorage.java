@@ -1,8 +1,8 @@
 package com.blibli.oss.qa.util.model;
 
 import lombok.Getter;
-import org.openqa.selenium.devtools.v125.network.model.Request;
-import org.openqa.selenium.devtools.v125.network.model.Response;
+import org.openqa.selenium.devtools.v137.network.model.Request;
+import org.openqa.selenium.devtools.v137.network.model.Response;
 
 import java.util.ArrayList;
 import java.util.Date;
