@@ -8,9 +8,9 @@ import de.sstoehr.harreader.model.HarRequest;
 import de.sstoehr.harreader.model.HarResponse;
 import de.sstoehr.harreader.model.HarTiming;
 import de.sstoehr.harreader.model.HttpMethod;
-import org.openqa.selenium.devtools.v125.network.model.Request;
-import org.openqa.selenium.devtools.v125.network.model.ResourceTiming;
-import org.openqa.selenium.devtools.v125.network.model.Response;
+import org.openqa.selenium.devtools.v137.network.model.Request;
+import org.openqa.selenium.devtools.v137.network.model.ResourceTiming;
+import org.openqa.selenium.devtools.v137.network.model.Response;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -154,8 +154,7 @@ public class HarEntryConverter {
         harRequest.setUrl(request.getUrl());
         harRequest.setComment("");
         harRequest.setHttpVersion("HTTP/1.1");
-        HarPostData harPostData = new HarPostData();
-        harRequest.setPostData(harPostData);
+        harRequest.setPostData(request.getHasPostData().orElse(false) ? setHarPostData() : null);
         List<HarHeader> headers = new ArrayList<>();
         request.getHeaders().entrySet().forEach(entry -> {
             HarHeader header = new HarHeader();
@@ -165,6 +164,12 @@ public class HarEntryConverter {
         });
         harRequest.setHeaders(headers);
         return harRequest;
+    }
+
+    private HarPostData setHarPostData() {
+        HarPostData harPostData = new HarPostData();
+        harPostData.setText(request.getPostData().get());
+        return harPostData;
     }
 
     public HarEntry getHarEntry() {

@@ -6,7 +6,7 @@
 
     <groupId>com.blibli.oss.qa.util</groupId>
     <artifactId>har-util</artifactId>
-    <version>1.3.1</version>
+    <version>1.3.2</version>
 
     <name>har-util</name>
     <url>http://www.blibli.com</url>
@@ -15,7 +15,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <selenium.version>4.22.0</selenium.version>
+        <selenium.version>4.33.0</selenium.version>
     </properties>
 
     <distributionManagement>
@@ -64,7 +64,7 @@
         </dependency>
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-devtools-v125</artifactId>
+            <artifactId>selenium-devtools-v137</artifactId>
             <version>${selenium.version}</version>
         </dependency>
     </dependencies>
