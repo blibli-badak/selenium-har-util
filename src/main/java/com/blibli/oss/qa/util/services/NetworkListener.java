@@ -1,15 +1,12 @@
 package com.blibli.oss.qa.util.services;
 
 import com.blibli.oss.qa.util.model.Constant;
-import com.blibli.oss.qa.util.model.HarModel;
 import com.blibli.oss.qa.util.model.RequestResponseStorage;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import de.sstoehr.harreader.model.Har;
-import de.sstoehr.harreader.model.HarCreatorBrowser;
-import de.sstoehr.harreader.model.HarEntry;
-import de.sstoehr.harreader.model.HarLog;
-import de.sstoehr.harreader.model.HarPage;
-import de.sstoehr.harreader.model.HarPageTiming;
+import de.sstoehr.harreader.HarWriter;
+import de.sstoehr.harreader.HarWriterException;
+import de.sstoehr.harreader.model.*;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.WebDriver;
@@ -22,28 +19,27 @@ import org.openqa.selenium.devtools.v137.network.model.Response;
 import org.openqa.selenium.remote.Augmenter;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
+import java.time.ZonedDateTime;
+import java.util.*;
 
 @Slf4j
 public class NetworkListener {
-    static final String TARGET_PATH_FILE = System.getProperty("user.dir") + "/target/";
-    private final ConcurrentHashMap<List<Long>, HarModel> harModelHashMap = new ConcurrentHashMap<>();
+    @Setter
+    @Getter
     private WebDriver driver;
     private String baseRemoteUrl;
     private DevTools devTools;
-    private String harFile = "";
+    private String harFile;
+    /**
+     * -- SETTER --
+     *  Setup Charset on the file generation
+     *
+     * @param charset default will be UTF-8 , you can get from here https://docs.oracle.com/javase/8/docs/api/java/nio/charset/Charset.html
+     */
+    @Setter
     private String charset = Constant.DEFAULT_UNICODE;
 
     private HarCreatorBrowser harCreatorBrowser;
@@ -207,24 +203,12 @@ public class NetworkListener {
         return devTools;
     }
 
-    public WebDriver getDriver() {
-        return driver;
-    }
-
-    public void setDriver(WebDriver driver) {
-        this.driver = driver;
-    }
-
     public void switchWindow(String windowHandle) {
         start(windowHandle);
         driver.navigate().refresh();
     }
 
     public void createHarFile() {
-        Har har = new Har();
-        HarLog harLog = new HarLog();
-        harLog.setCreator(harCreatorBrowser);
-        harLog.setBrowser(harCreatorBrowser);
         List<HarPage> harPages = new ArrayList<>();
         List<HarEntry> harEntries = new ArrayList<>();
 
@@ -253,17 +237,17 @@ public class NetworkListener {
             });
         });
         log.info("har entry size : %d", harEntries.size());
-        harLog.setPages(harPages);
-        harLog.setEntries(harEntries);
-        har.setLog(harLog);
+        HarLog harLog = HarLog.builder()
+                .creator(harCreatorBrowser)
+                .browser(harCreatorBrowser)
+                .pages(harPages)
+                .entries(harEntries)
+                        .build();
+        Har har = Har.builder().log(harLog).build();
         createFile(har);
     }
 
     public void createHarFile(String filter) {
-        Har har = new Har();
-        HarLog harLog = new HarLog();
-        harLog.setCreator(harCreatorBrowser);
-        harLog.setBrowser(harCreatorBrowser);
         List<HarPage> harPages = new ArrayList<>();
         List<HarEntry> harEntries = new ArrayList<>();
 
@@ -285,48 +269,41 @@ public class NetworkListener {
             });
         });
         log.info("har entry size : %d", harEntries.size());
-        harLog.setPages(harPages);
-
-        harLog.setEntries(harEntries);
-        har.setLog(harLog);
+        HarLog harLog = HarLog.builder()
+                .pages(harPages)
+                .entries(harEntries)
+                .build();
+        Har har = Har.builder().log(harLog).build();
         createFile(har);
     }
 
     private void createFile(Har har) {
-        ObjectMapper om = new ObjectMapper();
+        HarWriter harWriter = new HarWriter();
         try {
-            String json = new String(om.writeValueAsString(har).getBytes(), charset);
-            // write json to file
-            Files.write(java.nio.file.Paths.get(harFile), json.getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
+            harWriter.writeTo(new File(harFile), har);
+        } catch (HarWriterException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    /**
-     * Setup Charset on the file generation
-     * @param charset default will be UTF-8 , you can get from here https://docs.oracle.com/javase/8/docs/api/java/nio/charset/Charset.html
-     */
-    public void setCharset(String charset){
-        this.charset = charset;
-    }
-
     private void createHarBrowser() {
-        harCreatorBrowser = new HarCreatorBrowser();
-        harCreatorBrowser.setName("gdn-qa-automation");
-        harCreatorBrowser.setVersion("0.0.1");
-        harCreatorBrowser.setComment("Created by HAR utils");
+        harCreatorBrowser = HarCreatorBrowser.builder()
+                .name("gdn-qa-automation")
+                .version(getClass().getPackage().getImplementationVersion())
+                .comment("Created by HAR utils")
+                        .build();
     }
 
     public HarPage createHarPage(String title) {
-        HarPage harPage = new HarPage();
-        harPage.setComment("Create by Har Utils");
-        HarPageTiming harPageTiming = new HarPageTiming();
-        harPageTiming.setOnContentLoad(0);
-        harPage.setPageTimings(harPageTiming);
-        harPage.setStartedDateTime(new Date());
-        harPage.setId(title);
-        return harPage;
+        HarPageTiming harPageTiming = HarPageTiming.builder()
+                .onContentLoad(0)
+                .build();
+        return HarPage.builder()
+                .comment("Create by Har Utils")
+                .pageTimings(harPageTiming)
+                .startedDateTime(ZonedDateTime.now())
+                .id(title)
+                .build();
     }
 
     public HarEntry createHarEntry(Request request,
@@ -352,7 +329,4 @@ public class NetworkListener {
         driver.navigate().refresh();
     }
 
-    public DevTools getDevTools() {
-        return devTools;
-    }
 }

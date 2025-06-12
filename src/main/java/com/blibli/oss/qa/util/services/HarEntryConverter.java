@@ -1,28 +1,25 @@
 package com.blibli.oss.qa.util.services;
 
-import de.sstoehr.harreader.model.HarContent;
-import de.sstoehr.harreader.model.HarEntry;
-import de.sstoehr.harreader.model.HarHeader;
-import de.sstoehr.harreader.model.HarPostData;
-import de.sstoehr.harreader.model.HarRequest;
-import de.sstoehr.harreader.model.HarResponse;
-import de.sstoehr.harreader.model.HarTiming;
-import de.sstoehr.harreader.model.HttpMethod;
+import de.sstoehr.harreader.model.*;
+import lombok.Getter;
 import org.openqa.selenium.devtools.v137.network.model.Request;
 import org.openqa.selenium.devtools.v137.network.model.ResourceTiming;
 import org.openqa.selenium.devtools.v137.network.model.Response;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
 public class HarEntryConverter {
     private final Request request;
     private final Response response;
-    private final HarEntry harEntry;
+    @Getter
+    private HarEntry harEntry;
     private final long startTime;
     private final String pageRef;
     private final String responseBody;
@@ -34,7 +31,7 @@ public class HarEntryConverter {
                              List<Long> time,
                              String pageRef,
                              String responseBody) {
-        if (time.size() == 0) {
+        if (time.isEmpty()) {
             time.add(0L);
         }
         harEntry = new HarEntry();
@@ -54,59 +51,58 @@ public class HarEntryConverter {
     }
 
     public void setup() {
-        harEntry.setRequest(convertHarRequest());
-        harEntry.setStartedDateTime(new Date(startTime));
-        harEntry.setTime((int) (endTime - startTime));
-        harEntry.setRequest(convertHarRequest());
-        if (response != null) {
-            harEntry.setResponse(convertHarResponse());
-        } else {
-            harEntry.setResponse(emptyHarResponse());
-        }
-        harEntry.setTimings(convertHarTiming());
-        harEntry.setPageref(pageRef);
+        harEntry = HarEntry.builder()
+                .request(convertHarRequest())
+                .startedDateTime(ZonedDateTime.ofInstant(Instant.ofEpochMilli(startTime), ZoneId.systemDefault()))
+                .time((int) (endTime - startTime))
+                .response(response != null ? convertHarResponse() : emptyHarResponse())
+                .timings(convertHarTiming())
+                .pageref(pageRef)
+                .build();
     }
 
     public HarTiming convertHarTiming() {
-        HarTiming harTiming = new HarTiming();
+        HarTiming harTiming;
         if (timing == null || timing.isEmpty()) {
-            harTiming.setDns(-1);
-            harTiming.setConnect(-1);
-            harTiming.setSend(-1);
-            harTiming.setWait(-1);
-            harTiming.setReceive(-1);
+            harTiming = HarTiming.builder()
+                    .dns(-1L)
+                    .connect(-1L)
+                    .send(-1L)
+                    .waitTime(-1L)
+                    .receive(-1L)
+                    .build();
             return harTiming;
         }
-        harTiming.setDns(timing.get().getDnsStart().intValue());
-        harTiming.setConnect(timing.get().getConnectStart().intValue());
-        harTiming.setSend(timing.get().getSendStart().intValue());
-        harTiming.setWait(
-                timing.get().getSendEnd().intValue() - timing.get().getSendStart().intValue());
-        harTiming.setReceive(
-                timing.get().getReceiveHeadersEnd().intValue() - timing.get().getSendEnd().intValue());
+        harTiming = HarTiming.builder()
+                .dns(timing.get().getDnsStart().longValue())
+                .connect(timing.get().getConnectStart().longValue())
+                .send(timing.get().getSendStart().longValue())
+                .waitTime(timing.get().getSendEnd().longValue() - timing.get().getSendStart().longValue())
+                .receive(timing.get().getReceiveHeadersEnd().longValue() - timing.get().getSendEnd().longValue())
+                .build();
         return harTiming;
     }
 
     private HarResponse convertHarResponse() {
-        HarResponse harResponse = new HarResponse();
-        harResponse.setStatus(response.getStatus());
-        harResponse.setStatusText(response.getStatusText());
-        harResponse.setHttpVersion("HTTP/1.1");
-        harResponse.setRedirectURL("");
-        harResponse.setHeaders(convertHarHeadersResponse());
-        harResponse.setContent(setHarContentResponse());
-        return harResponse;
+        return HarResponse.builder()
+                .status(response.getStatus())
+                .statusText(response.getStatusText())
+                .httpVersion("HTTP/1.1")
+                .redirectURL("")
+                .headers(convertHarHeadersResponse())
+                .content(setHarContentResponse())
+                .build();
     }
 
     private HarResponse emptyHarResponse() {
-        HarResponse harResponse = new HarResponse();
-        harResponse.setStatus(0);
-        harResponse.setStatusText("");
-        harResponse.setHttpVersion("HTTP/1.1");
-        harResponse.setRedirectURL("");
-        harResponse.setHeaders(new ArrayList<>());
-        harResponse.setContent(setEmptyHarContentResponse());
-        return harResponse;
+        return HarResponse.builder()
+                .status(0)
+                .statusText("")
+                .httpVersion("HTTP/1.1")
+                .redirectURL("")
+                .headers(new ArrayList<>())
+                .content(setEmptyHarContentResponse())
+                .build();
     }
 
     private String convertInputStreamtoString(InputStream inputStream) {
@@ -123,57 +119,55 @@ public class HarEntryConverter {
     }
 
     private HarContent setHarContentResponse() {
-        HarContent harContent = new HarContent();
-        harContent.setSize((long) response.getEncodedDataLength());
-        harContent.setText(responseBody);
-        harContent.setMimeType(response.getMimeType());
-        return harContent;
+        return HarContent.builder()
+                .size((long) response.getEncodedDataLength())
+                .text(responseBody)
+                .mimeType(response.getMimeType())
+                .build();
     }
 
     private HarContent setEmptyHarContentResponse() {
-        HarContent harContent = new HarContent();
-        harContent.setSize((long) 0);
-        harContent.setMimeType("text/plain");
-        return harContent;
+        return HarContent.builder()
+                .size((long) 0)
+                .mimeType("text/plain")
+                .build();
     }
 
     private List<HarHeader> convertHarHeadersResponse() {
         List<HarHeader> harHeaders = new java.util.ArrayList<>();
         response.getHeaders().forEach((key, value) -> {
-            HarHeader harHeader = new HarHeader();
-            harHeader.setName(key);
-            harHeader.setValue(value.toString());
+            HarHeader harHeader = HarHeader.builder()
+                    .name(key)
+                    .value(value.toString())
+                    .build();
             harHeaders.add(harHeader);
         });
         return harHeaders;
     }
 
     public HarRequest convertHarRequest() {
-        HarRequest harRequest = new HarRequest();
-        harRequest.setMethod(HttpMethod.valueOf(request.getMethod()));
-        harRequest.setUrl(request.getUrl());
-        harRequest.setComment("");
-        harRequest.setHttpVersion("HTTP/1.1");
-        harRequest.setPostData(request.getHasPostData().orElse(false) ? setHarPostData() : null);
         List<HarHeader> headers = new ArrayList<>();
-        request.getHeaders().entrySet().forEach(entry -> {
-            HarHeader header = new HarHeader();
-            header.setName(entry.getKey());
-            header.setValue(entry.getValue().toString());
+        request.getHeaders().forEach((key, value) -> {
+            HarHeader header = HarHeader.builder()
+                    .name(key)
+                    .value(value.toString())
+                    .build();
             headers.add(header);
         });
-        harRequest.setHeaders(headers);
-        return harRequest;
+        return HarRequest.builder()
+                .method(String.valueOf(HttpMethod.valueOf(request.getMethod())))
+                .url(request.getUrl())
+                .comment("")
+                .httpVersion("HTTP/1.1")
+                .postData(request.getHasPostData().orElse(false) ? setHarPostData() : new HarPostData())
+                .headers(headers)
+                .build();
     }
 
     private HarPostData setHarPostData() {
-        HarPostData harPostData = new HarPostData();
-        harPostData.setText(request.getPostData().get());
-        return harPostData;
-    }
-
-    public HarEntry getHarEntry() {
-        return harEntry;
+        return HarPostData.builder()
+                .text(request.getPostData().get())
+                .build();
     }
 
 }
