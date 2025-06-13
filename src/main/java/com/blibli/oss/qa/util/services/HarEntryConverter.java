@@ -8,9 +8,7 @@ import de.sstoehr.harreader.model.HarRequest;
 import de.sstoehr.harreader.model.HarResponse;
 import de.sstoehr.harreader.model.HarTiming;
 import de.sstoehr.harreader.model.HttpMethod;
-import org.openqa.selenium.devtools.v137.network.model.Request;
-import org.openqa.selenium.devtools.v137.network.model.ResourceTiming;
-import org.openqa.selenium.devtools.v137.network.model.Response;
+import org.openqa.selenium.devtools.v137.network.model.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,6 +20,9 @@ import java.util.Optional;
 public class HarEntryConverter {
     private final Request request;
     private final Response response;
+    private final LoadingFailed loadingFailed;
+    private final ResponseReceivedExtraInfo responseReceivedExtraInfo;
+
     private final HarEntry harEntry;
     private final long startTime;
     private final String pageRef;
@@ -31,9 +32,13 @@ public class HarEntryConverter {
 
     public HarEntryConverter(Request request,
                              Response response,
+                             LoadingFailed loadingFailed,
+                             ResponseReceivedExtraInfo responseReceivedExtraInfo,
                              List<Long> time,
                              String pageRef,
                              String responseBody) {
+        this.loadingFailed = loadingFailed;
+        this.responseReceivedExtraInfo = responseReceivedExtraInfo;
         if (time.size() == 0) {
             time.add(0L);
         }
@@ -62,6 +67,7 @@ public class HarEntryConverter {
             harEntry.setResponse(convertHarResponse());
         } else {
             harEntry.setResponse(emptyHarResponse());
+            harEntry.setAdditionalField("_resourceType", "other");
         }
         harEntry.setTimings(convertHarTiming());
         harEntry.setPageref(pageRef);
@@ -93,19 +99,33 @@ public class HarEntryConverter {
         harResponse.setStatusText(response.getStatusText());
         harResponse.setHttpVersion("HTTP/1.1");
         harResponse.setRedirectURL("");
-        harResponse.setHeaders(convertHarHeadersResponse());
+        harResponse.setHeaders(convertHarHeadersResponse(response.getHeaders()));
         harResponse.setContent(setHarContentResponse());
         return harResponse;
     }
 
     private HarResponse emptyHarResponse() {
         HarResponse harResponse = new HarResponse();
-        harResponse.setStatus(0);
-        harResponse.setStatusText("");
-        harResponse.setHttpVersion("HTTP/1.1");
-        harResponse.setRedirectURL("");
-        harResponse.setHeaders(new ArrayList<>());
-        harResponse.setContent(setEmptyHarContentResponse());
+        if (responseReceivedExtraInfo != null) {
+            harResponse.setStatus(responseReceivedExtraInfo.getStatusCode());
+            harResponse.setStatusText("");
+            harResponse.setHttpVersion("");
+            harResponse.setRedirectURL("");
+            harResponse.setHeaders(convertHarHeadersResponse(responseReceivedExtraInfo.getHeaders()));
+            harResponse.setContent(setEmptyHarContentResponse());
+            if (loadingFailed != null) {
+                harResponse.setAdditionalField("_error", loadingFailed.getErrorText());
+                harResponse.setAdditionalField("_fetchedViaServiceWorker", false);
+                harResponse.setAdditionalField("_transferSize", 0);
+            }
+        }else {
+            harResponse.setStatus(0);
+            harResponse.setStatusText("");
+            harResponse.setHttpVersion("HTTP/1.1");
+            harResponse.setRedirectURL("");
+            harResponse.setHeaders(new ArrayList<>());
+            harResponse.setContent(setEmptyHarContentResponse());
+        }
         return harResponse;
     }
 
@@ -133,13 +153,13 @@ public class HarEntryConverter {
     private HarContent setEmptyHarContentResponse() {
         HarContent harContent = new HarContent();
         harContent.setSize((long) 0);
-        harContent.setMimeType("text/plain");
+        harContent.setMimeType("x-unknown");
         return harContent;
     }
 
-    private List<HarHeader> convertHarHeadersResponse() {
+    private List<HarHeader> convertHarHeadersResponse(Headers headers) {
         List<HarHeader> harHeaders = new java.util.ArrayList<>();
-        response.getHeaders().forEach((key, value) -> {
+        headers.forEach((key, value) -> {
             HarHeader harHeader = new HarHeader();
             harHeader.setName(key);
             harHeader.setValue(value.toString());
