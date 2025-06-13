@@ -118,6 +118,13 @@ public class HarEntryConverter {
                 harResponse.setAdditionalField("_fetchedViaServiceWorker", false);
                 harResponse.setAdditionalField("_transferSize", 0);
             }
+        }else {
+            harResponse.setStatus(0);
+            harResponse.setStatusText("");
+            harResponse.setHttpVersion("HTTP/1.1");
+            harResponse.setRedirectURL("");
+            harResponse.setHeaders(new ArrayList<>());
+            harResponse.setContent(setEmptyHarContentResponse());
         }
         return harResponse;
     }
