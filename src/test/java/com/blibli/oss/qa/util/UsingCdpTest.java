@@ -11,6 +11,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
@@ -38,7 +39,6 @@ public class UsingCdpTest  extends BaseTest{
     }
 
 
-    @Test
     public void testWithLocalDriver() {
         setupLocalDriver();
         driver = new ChromeDriver(options);
@@ -50,6 +50,23 @@ public class UsingCdpTest  extends BaseTest{
         WebElement element =driver.findElement(By.id("searchInput"));
         webDriverWait.until(webDriver -> element.isDisplayed());
         element.sendKeys("Kiwi/n");
+    }
+
+    public void testLoginFeature() {
+        setupLocalDriver();
+        driver = new ChromeDriver(options);
+        driver.manage().window().maximize();
+        networkListener = new NetworkListener(driver , driver.getDevTools(), "har-with-cdp.har");
+        networkListener.start();
+        driver.get("https://stackoverflow.com/users/login");
+        WebDriverWait webDriverWait = new WebDriverWait(driver, Duration.ofSeconds(10));
+
+        webDriverWait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email"))).sendKeys("Kiwi");
+        webDriverWait.until(ExpectedConditions.visibilityOfElementLocated(By.id("password"))).sendKeys("Kiwi");
+
+        webDriverWait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//button[@id='submit-button']"))).click();
+
+        webDriverWait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//p[@class='flex--item s-input-message js-error-message ']")));
     }
 
     @AfterEach

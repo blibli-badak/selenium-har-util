@@ -19,11 +19,16 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 
 /**
@@ -56,10 +61,12 @@ public class AppTest {
         networkListener = new NetworkListener(driver, "har-local-driver.har");
         networkListener.start();
         driver.get("https://en.wiktionary.org/wiki/Wiktionary:Main_Page");
-        WebDriverWait webDriverWait = new WebDriverWait(driver, Duration.ofSeconds(30));
-        WebElement element =driver.findElement(By.id("searchInput"));
-        webDriverWait.until(webDriver -> element.isDisplayed());
-        element.sendKeys("Kiwi/n");
+//        WebDriverWait webDriverWait = new WebDriverWait(driver, Duration.ofSeconds(30));
+//        WebElement element =driver.findElement(By.id("searchInput"));
+//        webDriverWait.until(webDriver -> element.isDisplayed());
+//        element.sendKeys("Kiwi/n");
+        Path path = Paths.get("har-local-driver.har");
+        assertFalse(Files.exists(path));
         /**
          * Todo : https://www.browserstack.com/docs/automate/selenium/event-driven-testing#intercept-network ubah ChromeDriver jadi webdriver biasa , trus ganti devtoolsnya
          * Todo : Tambahin test jika buka 2 tab

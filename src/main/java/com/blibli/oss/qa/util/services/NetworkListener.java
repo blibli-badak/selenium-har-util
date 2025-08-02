@@ -2,6 +2,7 @@ package com.blibli.oss.qa.util.services;
 
 import com.blibli.oss.qa.util.model.Constant;
 import com.blibli.oss.qa.util.model.HarModel;
+import com.blibli.oss.qa.util.model.RequestResponsePair;
 import com.blibli.oss.qa.util.model.RequestResponseStorage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.sstoehr.harreader.model.Har;
@@ -16,9 +17,8 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chromium.ChromiumDriver;
 import org.openqa.selenium.devtools.DevTools;
 import org.openqa.selenium.devtools.HasDevTools;
-import org.openqa.selenium.devtools.v125.network.Network;
-import org.openqa.selenium.devtools.v125.network.model.Request;
-import org.openqa.selenium.devtools.v125.network.model.Response;
+import org.openqa.selenium.devtools.v137.network.Network;
+import org.openqa.selenium.devtools.v137.network.model.*;
 import org.openqa.selenium.remote.Augmenter;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
@@ -153,8 +153,9 @@ public class NetworkListener {
             windowHandleStorageMap.put(windowHandle, requestResponseStorage);
 
             devTools.addListener(Network.requestWillBeSent(), requestConsumer -> {
+                String requestId = String.valueOf(requestConsumer.getRequestId());
                 Request request = requestConsumer.getRequest();
-                requestResponseStorage.addRequest(request, new Date());
+                requestResponseStorage.addRequest(requestId, request, new Date());
             });
 
             devTools.addListener(Network.responseReceived(), responseConsumer -> {
@@ -163,6 +164,14 @@ public class NetworkListener {
                     devTools.send(Network.getResponseBody(responseConsumer.getRequestId()))
                         .getBody();
                 requestResponseStorage.addResponse(response, responseBody);
+            });
+
+            devTools.addListener(Network.loadingFailed(), loadingFailedConsumer -> {
+                requestResponseStorage.addLoadingFailed(loadingFailedConsumer);
+            });
+
+            devTools.addListener(Network.responseReceivedExtraInfo(), responseReceivedExtraInfoConsumer -> {
+                requestResponseStorage.addresponseReceivedExtraInfo(responseReceivedExtraInfoConsumer);
             });
         }
     }
@@ -231,18 +240,7 @@ public class NetworkListener {
         windowHandleStorageMap.forEach((windowHandle, reqResStorage) -> {
             harPages.add(createHarPage(windowHandle));
             reqResStorage.getRequestResponsePairs().forEach(pair -> {
-                List<Long> time = new ArrayList<>();
-                if (pair.getResponse() != null) {
-                    pair.getResponse().getTiming().ifPresent(timing -> {
-                        time.add(pair.getRequestOn().getTime());
-                        time.add(timing.getReceiveHeadersEnd().longValue());
-                    });
-                    harEntries.add(createHarEntry(pair.getRequest(),
-                        pair.getResponse(),
-                        time,
-                        windowHandle,
-                        pair.getResponseBody()));
-                }
+                harEntries.addAll(saveHarEntry(pair, windowHandle));
             });
         });
         log.info("har entry size : %d", harEntries.size());
@@ -253,6 +251,7 @@ public class NetworkListener {
     }
 
     public void createHarFile(String filter) {
+        System.out.println("---- createHarFile - Filter ----");
         Har har = new Har();
         HarLog harLog = new HarLog();
         harLog.setCreator(harCreatorBrowser);
@@ -263,17 +262,8 @@ public class NetworkListener {
         windowHandleStorageMap.forEach((windowHandle, reqResStorage) -> {
             harPages.add(createHarPage(windowHandle));
             reqResStorage.getRequestResponsePairs().forEach(pair -> {
-                List<Long> time = new ArrayList<>();
-                if (pair.getRequest().getUrl().contains(filter) && pair.getResponse() != null) {
-                    pair.getResponse().getTiming().ifPresent(timing -> {
-                        time.add(pair.getRequestOn().getTime());
-                        time.add(timing.getReceiveHeadersEnd().longValue());
-                    });
-                    harEntries.add(createHarEntry(pair.getRequest(),
-                        pair.getResponse(),
-                        time,
-                        windowHandle,
-                        pair.getResponseBody()));
+                if (pair.getRequest().getUrl().contains(filter)) {
+                    harEntries.addAll(saveHarEntry(pair,windowHandle));
                 }
             });
         });
@@ -283,6 +273,34 @@ public class NetworkListener {
         harLog.setEntries(harEntries);
         har.setLog(harLog);
         createFile(har);
+    }
+
+    private List<HarEntry> saveHarEntry(RequestResponsePair pair, String windowHandle){
+        List<HarEntry> result = new ArrayList<>();
+        List<Long> time = new ArrayList<>();
+        if (pair.getResponse() != null) {
+            pair.getResponse().getTiming().ifPresent(timing -> {
+                time.add(pair.getRequestOn().getTime());
+                time.add(timing.getReceiveHeadersEnd().longValue());
+            });
+            result.add(createHarEntry(pair.getRequest(),
+                    pair.getResponse(),
+                    time,
+                    windowHandle,
+                    pair.getResponseBody(),
+                    pair.getLoadingFailed(),
+                    pair.getResponseReceivedExtraInfo()));
+        } else {
+            log.info("Response is null for %s", pair.getRequest().getUrl());
+            result.add(createHarEntry(pair.getRequest(),
+                    null,
+                    time,
+                    windowHandle,
+                    null,
+                    pair.getLoadingFailed(),
+                    pair.getResponseReceivedExtraInfo()));
+        }
+        return result;
     }
 
     private void createFile(Har har) {
@@ -323,12 +341,14 @@ public class NetworkListener {
     }
 
     public HarEntry createHarEntry(Request request,
-        Response response,
-        List<Long> time,
-        String pagref,
-        String responseBody) {
+                                   Response response,
+                                   List<Long> time,
+                                   String pagref,
+                                   String responseBody,
+                                   LoadingFailed loadingFailed,
+                                   ResponseReceivedExtraInfo responseReceivedExtraInfo) {
         HarEntryConverter harEntry =
-            new HarEntryConverter(request, response, time, pagref, responseBody);
+                new HarEntryConverter(request, response,loadingFailed, responseReceivedExtraInfo, time, pagref, responseBody);
         harEntry.setup();
         return harEntry.getHarEntry();
     }
