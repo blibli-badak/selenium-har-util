@@ -27,31 +27,32 @@ public class RequestResponseStorage {
   }
 
   public void addResponse(Response response, String responseBody) {
-    for (int i = 0; i < requestResponsePairs.size(); i++) {
-      if (requestResponsePairs.get(i).getRequest().getUrl().equals(response.getUrl())) {
-        requestResponsePairs.get(i).setResponse(response);
-        requestResponsePairs.get(i).setResponseBody(responseBody);
-        break;
+      for (RequestResponsePair requestResponsePair : requestResponsePairs) {
+          if (requestResponsePair.getRequest().getUrl().equals(response.getUrl())) {
+              requestResponsePair.setResponse(response);
+              requestResponsePair.setResponseBody(responseBody);
+              break;
+          }
       }
-    }
   }
 
   public void addLoadingFailed(LoadingFailed loadingFailed){
-    for (int i = 0; i < requestResponsePairs.size(); i++) {
-      if (requestResponsePairs.get(i).getRequestId().equals(loadingFailed.getRequestId().toString())) {
-        requestResponsePairs.get(i).setLoadingFailed(loadingFailed);
-        break;
+      for (RequestResponsePair requestResponsePair : requestResponsePairs) {
+          if (requestResponsePair.getRequestId().equals(loadingFailed.getRequestId().toString())) {
+              requestResponsePair.setLoadingFailed(loadingFailed);
+              break;
+          }
       }
-    }
   }
 
   public void addresponseReceivedExtraInfo(ResponseReceivedExtraInfo responseReceivedExtraInfoConsumer) {
-    for (int i = 0; i < requestResponsePairs.size(); i++) {
-      if (requestResponsePairs.get(i).getRequestId().equals(responseReceivedExtraInfoConsumer.getRequestId().toString())) {
-        requestResponsePairs.get(i).setResponseReceivedExtraInfo(responseReceivedExtraInfoConsumer);
-        break;
+      for (RequestResponsePair requestResponsePair : requestResponsePairs) {
+          if (requestResponsePair.getRequestId().equals(responseReceivedExtraInfoConsumer.getRequestId().toString())) {
+              requestResponsePair.setResponseReceivedExtraInfo(responseReceivedExtraInfoConsumer);
+              break;
+          }
       }
-    }
   }
+
 }
 

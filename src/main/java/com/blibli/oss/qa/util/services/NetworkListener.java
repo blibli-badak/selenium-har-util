@@ -45,12 +45,13 @@ public class NetworkListener {
     private DevTools devTools;
     private String harFile = "";
     private String charset = Constant.DEFAULT_UNICODE;
-
+    private Boolean isProfiling = false;
+    private String profileName = "default-profile";
     private HarCreatorBrowser harCreatorBrowser;
 
     private final Map<String, RequestResponseStorage> windowHandleStorageMap = new HashMap<>();
     private RequestResponseStorage requestResponseStorage;
-
+    private TracerServices tracerServices;
 
     /**
      * Generate new network listener object
@@ -70,6 +71,13 @@ public class NetworkListener {
         devTools = ((ChromiumDriver) driver).getDevTools();
         createHarBrowser();
     }
+
+    /**
+     * if  you already have devTools object , you can use this constructor, in either local or remote driver
+     * @param driver
+     * @param devTools
+     * @param harFileName
+     */
     public NetworkListener(WebDriver driver , DevTools devTools , String harFileName){
         this.devTools = devTools;
         this.driver = driver;
@@ -85,11 +93,11 @@ public class NetworkListener {
 
 
     /**
-     * Generate new network listener object
+     * Generate new network listener object , special for  remote driver like selenium, selenoid, etc
      *
-     * @param driver        chrome driver that you are using
+     * @param driver        chrome remote driver that you are using
      * @param harFileName   file will be stored under target folder
-     * @param baseRemoteUrl Base Selenoid URl that you are using
+     * @param baseRemoteUrl Base Selenoid URl that you are using ( it should be like http://localhost:4444 or http://selenoid.example.com:4444)
      */
     public NetworkListener(WebDriver driver, String harFileName, String baseRemoteUrl) {
         this.driver = driver;
@@ -128,23 +136,24 @@ public class NetworkListener {
     }
 
     public void start() {
-        // main listener to intercept response and continue
-//        initializeCdp();
-//        Filter filterResponses = next -> req -> {
-//            Long startTime = System.currentTimeMillis();
-//            HttpResponse res = next.execute(req);
-//            Long endTime = System.currentTimeMillis();
-//            harModelHashMap.put(Lists.newArrayList(startTime, endTime), new HarModel(req, res));
-//            return res;
-//        };
-//        NetworkInterceptor networkInterceptor = new NetworkInterceptor(driver, filterResponses);
         start(driver.getWindowHandle());
     }
 
+    /**
+     * Start the network listener for a specific window handle
+     * in this method you can start listening for network events , you can bypass window handle as the each tab will produce its own
+     *
+     * @param windowHandle the window handle to start listening for network events
+     */
     public void start(String windowHandle) {
         initializeCdp();
         devTools.createSession(windowHandle);
         devTools.send(Network.enable(Optional.empty(), Optional.empty(), Optional.empty()));
+        if(isProfiling){
+            tracerServices = new TracerServices(devTools , profileName);
+            tracerServices.start();
+        }
+
         devTools.clearListeners();
 
         requestResponseStorage = windowHandleStorageMap.get(windowHandle);
@@ -173,6 +182,30 @@ public class NetworkListener {
             devTools.addListener(Network.responseReceivedExtraInfo(), responseReceivedExtraInfoConsumer -> {
                 requestResponseStorage.addresponseReceivedExtraInfo(responseReceivedExtraInfoConsumer);
             });
+        }
+    }
+
+    /**
+     * For start profiling in the browser , it's same with you are using performance tab in the CDP
+     */
+    // TODO : Trial using  real driver in test
+    //  https://github.com/zchandikaz/CodeExamples/blob/main/selenium-chrome-profiling-example/src/test/java/org/example/utility/DevToolUtility.java#L172
+    public void enableProfiling(Boolean isEnable , String profileName) {
+        this.isProfiling = isEnable;
+        this.profileName = profileName;
+    }
+
+    public void stopProfiling() {
+        if (tracerServices != null) {
+            try {
+                tracerServices.stop();
+            } catch (Exception e) {
+                log.warn(
+                        "Error during stop profiling, {} ", e.getMessage(),
+                        e
+                );
+            }
+            tracerServices = null;
         }
     }
 
