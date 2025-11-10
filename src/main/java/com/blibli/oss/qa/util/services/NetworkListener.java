@@ -17,8 +17,8 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chromium.ChromiumDriver;
 import org.openqa.selenium.devtools.DevTools;
 import org.openqa.selenium.devtools.HasDevTools;
-import org.openqa.selenium.devtools.v137.network.Network;
-import org.openqa.selenium.devtools.v137.network.model.*;
+import org.openqa.selenium.devtools.v142.network.Network;
+import org.openqa.selenium.devtools.v142.network.model.*;
 import org.openqa.selenium.remote.Augmenter;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
@@ -144,7 +144,7 @@ public class NetworkListener {
     public void start(String windowHandle) {
         initializeCdp();
         devTools.createSession(windowHandle);
-        devTools.send(Network.enable(Optional.empty(), Optional.empty(), Optional.empty()));
+        devTools.send(Network.enable(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty()));
         devTools.clearListeners();
 
         requestResponseStorage = windowHandleStorageMap.get(windowHandle);

@@ -2,7 +2,7 @@ package com.blibli.oss.qa.util.model;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.openqa.selenium.devtools.v137.network.model.*;
+import org.openqa.selenium.devtools.v142.network.model.*;
 
 
 import java.util.Date;
