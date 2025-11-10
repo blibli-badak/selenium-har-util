@@ -243,7 +243,7 @@ public class NetworkListener {
                 harEntries.addAll(saveHarEntry(pair, windowHandle));
             });
         });
-        log.info("har entry size : %d", harEntries.size());
+            log.info("har entry size : {}", harEntries.size());
         harLog.setPages(harPages);
         harLog.setEntries(harEntries);
         har.setLog(harLog);
@@ -267,7 +267,7 @@ public class NetworkListener {
                 }
             });
         });
-        log.info("har entry size : %d", harEntries.size());
+    log.info("har entry size : {}", harEntries.size());
         harLog.setPages(harPages);
 
         harLog.setEntries(harEntries);
@@ -291,7 +291,7 @@ public class NetworkListener {
                     pair.getLoadingFailed(),
                     pair.getResponseReceivedExtraInfo()));
         } else {
-            log.info("Response is null for %s", pair.getRequest().getUrl());
+            log.info("Response is null for {}", pair.getRequest().getUrl());
             result.add(createHarEntry(pair.getRequest(),
                     null,
                     time,
