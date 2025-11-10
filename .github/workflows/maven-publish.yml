@@ -20,6 +20,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        # allow the action to use the GITHUB_TOKEN for pushing back to the repo
+        persist-credentials: true
+        # fetch full history so we can push safely and create commits
+        fetch-depth: 0
     - name: Prepare version from release tag
       id: prepare_version
       run: |
@@ -36,6 +41,21 @@ jobs:
       run: |
         # Update pom.xml in workspace to use the release tag version (no backup pom)
         mvn -B -DskipTests org.codehaus.mojo:versions-maven-plugin:2.14.2:set -DnewVersion="$VERSION" -DgenerateBackupPoms=false
+    - name: Commit pom.xml version change
+      run: |
+        # Configure git author for the automated commit
+        git config user.name "github-actions[bot]" || true
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com" || true
+
+        # Only commit if there are changes (the versions plugin modified the pom)
+        if git status --porcelain | grep -q .; then
+          git add pom.xml
+          git commit -m "ci: set project version to $VERSION [skip ci]" || echo "commit failed or no changes"
+          # Push to master. Note: this may fail if branch protection prevents pushes from GITHUB_TOKEN.
+          git push origin HEAD:master || echo "push failed (possibly protected branch)"
+        else
+          echo "No pom.xml changes to commit"
+        fi
     - name: Set up JDK 11
       uses: actions/setup-java@v3
       with:
