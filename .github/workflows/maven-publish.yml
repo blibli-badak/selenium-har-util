@@ -21,7 +21,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        # allow the action to use the GITHUB_TOKEN for pushing back to the repo
+        # Use a PAT to push commits back to the repo. Create a repository secret
+        # named `PUBLISH_PAT` with a token that has repo write permissions.
+        # If you prefer the built-in GITHUB_TOKEN, remove this `token:` line.
+        token: ${{ secrets.PUBLISH_PAT }}
+        # allow the action to use the token for pushing back to the repo
         persist-credentials: true
         # fetch full history so we can push safely and create commits
         fetch-depth: 0
