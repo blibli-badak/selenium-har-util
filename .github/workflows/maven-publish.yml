@@ -20,6 +20,22 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Prepare version from release tag
+      id: prepare_version
+      run: |
+        # Use the release tag as VERSION. Tags are expected like "1.3.0".
+        TAG="${{ github.event.release.tag_name }}"
+        # strip leading 'v' or 'V' if present (safe even if tags don't have 'v')
+        VERSION="${TAG#v}"
+        VERSION="${VERSION#V}"
+        echo "Original tag: $TAG"
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+        echo "Prepared version: $VERSION"
+
+    - name: Set Maven project version from tag
+      run: |
+        # Update pom.xml in workspace to use the release tag version (no backup pom)
+        mvn -B -DskipTests org.codehaus.mojo:versions-maven-plugin:2.14.2:set -DnewVersion="$VERSION" -DgenerateBackupPoms=false
     - name: Set up JDK 11
       uses: actions/setup-java@v3
       with:
