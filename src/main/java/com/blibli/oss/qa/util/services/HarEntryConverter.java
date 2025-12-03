@@ -188,7 +188,7 @@ public class HarEntryConverter {
 
     private HarPostData setHarPostData() {
         HarPostData harPostData = new HarPostData();
-        harPostData.setText(request.getPostData().get());
+        harPostData.setText(request.getPostData().isPresent() ? request.getPostData().get() : "");
         return harPostData;
     }
 
