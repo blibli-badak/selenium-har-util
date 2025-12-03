@@ -6,16 +6,17 @@ import org.openqa.selenium.devtools.v142.network.model.Request;
 import org.openqa.selenium.devtools.v142.network.model.Response;
 import org.openqa.selenium.devtools.v142.network.model.ResponseReceivedExtraInfo;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Getter
 public class RequestResponseStorage {
   private final List<RequestResponsePair> requestResponsePairs;
 
   public RequestResponseStorage() {
-    this.requestResponsePairs = new ArrayList<>();
+    this.requestResponsePairs = new CopyOnWriteArrayList<>();
   }
 
   public void addRequest(Request request, Date requestOn) {

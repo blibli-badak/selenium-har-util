@@ -48,7 +48,7 @@ public class NetworkListener {
 
     private HarCreatorBrowser harCreatorBrowser;
 
-    private final Map<String, RequestResponseStorage> windowHandleStorageMap = new HashMap<>();
+    private final Map<String, RequestResponseStorage> windowHandleStorageMap = new ConcurrentHashMap<>();
     private RequestResponseStorage requestResponseStorage;
 
 
@@ -237,9 +237,11 @@ public class NetworkListener {
         List<HarPage> harPages = new ArrayList<>();
         List<HarEntry> harEntries = new ArrayList<>();
 
-        windowHandleStorageMap.forEach((windowHandle, reqResStorage) -> {
+        // Create a thread-safe snapshot of the map to prevent ConcurrentModificationException
+        new HashMap<>(windowHandleStorageMap).forEach((windowHandle, reqResStorage) -> {
             harPages.add(createHarPage(windowHandle));
-            reqResStorage.getRequestResponsePairs().forEach(pair -> {
+            // Create a thread-safe snapshot of the request-response pairs list
+            new ArrayList<>(reqResStorage.getRequestResponsePairs()).forEach(pair -> {
                 harEntries.addAll(saveHarEntry(pair, windowHandle));
             });
         });
@@ -259,9 +261,11 @@ public class NetworkListener {
         List<HarPage> harPages = new ArrayList<>();
         List<HarEntry> harEntries = new ArrayList<>();
 
-        windowHandleStorageMap.forEach((windowHandle, reqResStorage) -> {
+        // Create a thread-safe snapshot of the map to prevent ConcurrentModificationException
+        new HashMap<>(windowHandleStorageMap).forEach((windowHandle, reqResStorage) -> {
             harPages.add(createHarPage(windowHandle));
-            reqResStorage.getRequestResponsePairs().forEach(pair -> {
+            // Create a thread-safe snapshot of the request-response pairs list
+            new ArrayList<>(reqResStorage.getRequestResponsePairs()).forEach(pair -> {
                 if (pair.getRequest().getUrl().contains(filter)) {
                     harEntries.addAll(saveHarEntry(pair,windowHandle));
                 }
