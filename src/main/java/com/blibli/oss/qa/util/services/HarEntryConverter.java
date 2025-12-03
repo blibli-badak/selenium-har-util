@@ -189,7 +189,7 @@ public class HarEntryConverter {
     private HarPostData setHarPostData() {
         HarPostData harPostData = new HarPostData();
         String postDataText = request.getPostDataEntries()
-                .flatMap(entries -> entries.isEmpty() ? java.util.Optional.empty() : java.util.Optional.ofNullable(entries.get(0).getBody()))
+                .flatMap(entries -> entries.isEmpty() ? java.util.Optional.empty() : entries.get(0).getBytes())
                 .orElse("");
         harPostData.setText(postDataText);
         return harPostData;
