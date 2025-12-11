@@ -295,7 +295,6 @@ public class NetworkListener {
                     pair.getLoadingFailed(),
                     pair.getResponseReceivedExtraInfo()));
         } else {
-            log.info("Response is null for {}", pair.getRequest().getUrl());
             result.add(createHarEntry(pair.getRequest(),
                     null,
                     time,
