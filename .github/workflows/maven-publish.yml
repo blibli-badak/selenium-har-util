@@ -89,4 +89,30 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
         USERNAME: ${{ github.actor }}
+
+    - name: Prepare pom for next iterations
+      run: |
+        # Read current version from pom.xml
+        current=$(grep -m1 '<version>' pom.xml | sed -n 's:.*<version>\(.*\)</version>.*:\1:p')
+        echo "Current pom version: $current"
+
+        # Increment patch version (e.g. 1.6.0 -> 1.6.1)
+        version_base=${current%%-*}
+        IFS='.' read -r major minor patch <<< "$version_base"
+        next_patch=$((patch + 1))
+        next_version="$major.$minor.$next_patch"
+        echo "Next pom version: $next_version"
+
+        mvn -B -DskipTests org.codehaus.mojo:versions-maven-plugin:2.14.2:set -DnewVersion="$next_version" -DgenerateBackupPoms=false
+
+        git config user.name "github-actions[bot]" || true
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com" || true
+
+        if git status --porcelain | grep -q .; then
+          git add pom.xml
+          git commit -m "Prepare for next iterations"
+          git push origin HEAD:master
+        else
+          echo "No pom.xml changes to commit"
+        fi
         
