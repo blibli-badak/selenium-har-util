@@ -11,5 +11,8 @@
       ]
     }
   },
+  "remoteEnv": {
+    "CHROME_MODE": "headless"
+  },
   "postCreateCommand": "mvn -q -DskipTests=true compile"
 }
