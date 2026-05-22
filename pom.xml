@@ -15,7 +15,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <selenium.version>4.39.0</selenium.version>
+        <selenium.version>4.44.0</selenium.version>
+        <selenium-dev-tools.version>selenium-devtools-v148</selenium-dev-tools.version>
     </properties>
 
     <distributionManagement>
@@ -64,7 +65,7 @@
         </dependency>
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-devtools-v142</artifactId>
+            <artifactId>${selenium-dev-tools.version}</artifactId>
             <version>${selenium.version}</version>
         </dependency>
     </dependencies>

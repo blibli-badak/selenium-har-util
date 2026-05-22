@@ -1,0 +1,15 @@
+{
+  "name": "selenium-har-util",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  },
+  "postCreateCommand": "mvn -q -DskipTests=true compile"
+}
