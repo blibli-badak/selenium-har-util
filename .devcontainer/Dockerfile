@@ -1,5 +1,3 @@
-FROM mcr.microsoft.com/devcontainers/java:ubuntu-22.04
+FROM mcr.microsoft.com/devcontainers/base:alpine
 
-RUN apt-get update \
-    && apt-get install -y maven chromium-browser chromium-chromedriver \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache openjdk21 maven chromium chromium-chromedriver
