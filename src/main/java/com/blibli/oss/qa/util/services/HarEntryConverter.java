@@ -22,6 +22,7 @@ public class HarEntryConverter {
     private final Response response;
     private final LoadingFailed loadingFailed;
     private final ResponseReceivedExtraInfo responseReceivedExtraInfo;
+    private final LoadingFinished loadingFinished;
 
     private final HarEntry harEntry;
     private final long startTime;
@@ -36,23 +37,31 @@ public class HarEntryConverter {
                              ResponseReceivedExtraInfo responseReceivedExtraInfo,
                              List<Long> time,
                              String pageRef,
-                             String responseBody) {
+                             String responseBody,
+                             LoadingFinished loadingFinished) {
         this.loadingFailed = loadingFailed;
         this.responseReceivedExtraInfo = responseReceivedExtraInfo;
+        this.loadingFinished = loadingFinished;
         if (time.size() == 0) {
             time.add(0L);
         }
         harEntry = new HarEntry();
         this.request = request;
         this.startTime = time.get(0);
+        this.endTime = this.startTime;
         this.response = response;
         this.responseBody = responseBody;
         if (response != null) {
             this.timing = response.getTiming();
             if (timing.isPresent()) {
                 ResourceTiming resourceTiming = timing.get();
-                Number receiveHeadersEnd = resourceTiming.getReceiveHeadersEnd();
-                this.endTime = time.get(0) + receiveHeadersEnd.longValue();
+                if (loadingFinished != null) {
+                    double durationSeconds = loadingFinished.getTimestamp().toJson().doubleValue() - resourceTiming.getRequestTime().doubleValue();
+                    this.endTime = this.startTime + (long)(durationSeconds * 1000);
+                } else {
+                    Number receiveHeadersEnd = resourceTiming.getReceiveHeadersEnd();
+                    this.endTime = this.startTime + receiveHeadersEnd.longValue();
+                }
             }
         }
         this.pageRef = pageRef;
@@ -78,18 +87,38 @@ public class HarEntryConverter {
         if (timing == null || timing.isEmpty()) {
             harTiming.setDns(-1);
             harTiming.setConnect(-1);
-            harTiming.setSend(-1);
-            harTiming.setWait(-1);
-            harTiming.setReceive(-1);
+            harTiming.setSend(0);
+            harTiming.setWait(0);
+            harTiming.setReceive(0);
             return harTiming;
         }
-        harTiming.setDns(timing.get().getDnsStart().intValue());
-        harTiming.setConnect(timing.get().getConnectStart().intValue());
-        harTiming.setSend(timing.get().getSendStart().intValue());
-        harTiming.setWait(
-                timing.get().getSendEnd().intValue() - timing.get().getSendStart().intValue());
-        harTiming.setReceive(
-                timing.get().getReceiveHeadersEnd().intValue() - timing.get().getSendEnd().intValue());
+        
+        ResourceTiming t = timing.get();
+        long dns = t.getDnsStart().longValue() != -1 && t.getDnsEnd().longValue() != -1
+                ? t.getDnsEnd().longValue() - t.getDnsStart().longValue() : -1;
+        harTiming.setDns((int) dns);
+
+        long connect = t.getConnectStart().longValue() != -1 && t.getConnectEnd().longValue() != -1
+                ? t.getConnectEnd().longValue() - t.getConnectStart().longValue() : -1;
+        harTiming.setConnect((int) connect);
+
+        long send = t.getSendStart().longValue() != -1 && t.getSendEnd().longValue() != -1
+                ? t.getSendEnd().longValue() - t.getSendStart().longValue() : 0;
+        harTiming.setSend((int) Math.max(0, send));
+
+        long sendEnd = t.getSendEnd().longValue() != -1 ? t.getSendEnd().longValue() : 0;
+        long receiveHeadersEnd = t.getReceiveHeadersEnd().longValue() != -1 ? t.getReceiveHeadersEnd().longValue() : sendEnd;
+        long wait = receiveHeadersEnd - sendEnd;
+        harTiming.setWait((int) Math.max(0, wait));
+
+        long receive = 0;
+        if (loadingFinished != null) {
+            double durationSeconds = loadingFinished.getTimestamp().toJson().doubleValue() - t.getRequestTime().doubleValue();
+            long totalOffset = (long)(durationSeconds * 1000);
+            receive = totalOffset - receiveHeadersEnd;
+        }
+        harTiming.setReceive((int) Math.max(0, receive));
+
         return harTiming;
     }
 

@@ -5,6 +5,7 @@ import org.openqa.selenium.devtools.v148.network.model.LoadingFailed;
 import org.openqa.selenium.devtools.v148.network.model.Request;
 import org.openqa.selenium.devtools.v148.network.model.Response;
 import org.openqa.selenium.devtools.v148.network.model.ResponseReceivedExtraInfo;
+import org.openqa.selenium.devtools.v148.network.model.LoadingFinished;
 
 import java.util.Collections;
 import java.util.Date;
@@ -50,6 +51,15 @@ public class RequestResponseStorage {
     for (int i = 0; i < requestResponsePairs.size(); i++) {
       if (requestResponsePairs.get(i).getRequestId().equals(responseReceivedExtraInfoConsumer.getRequestId().toString())) {
         requestResponsePairs.get(i).setResponseReceivedExtraInfo(responseReceivedExtraInfoConsumer);
+        break;
+      }
+    }
+  }
+
+  public void addLoadingFinished(LoadingFinished loadingFinished) {
+    for (int i = 0; i < requestResponsePairs.size(); i++) {
+      if (requestResponsePairs.get(i).getRequestId().equals(loadingFinished.getRequestId().toString())) {
+        requestResponsePairs.get(i).setLoadingFinished(loadingFinished);
         break;
       }
     }

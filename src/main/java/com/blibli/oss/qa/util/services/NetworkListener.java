@@ -155,7 +155,11 @@ public class NetworkListener {
             devTools.addListener(Network.requestWillBeSent(), requestConsumer -> {
                 String requestId = String.valueOf(requestConsumer.getRequestId());
                 Request request = requestConsumer.getRequest();
-                requestResponseStorage.addRequest(requestId, request, new Date());
+                long requestTime = System.currentTimeMillis();
+                if (requestConsumer.getWallTime() != null) {
+                    requestTime = (long) (requestConsumer.getWallTime().toJson().doubleValue() * 1000);
+                }
+                requestResponseStorage.addRequest(requestId, request, new Date(requestTime));
             });
 
             devTools.addListener(Network.responseReceived(), responseConsumer -> {
@@ -172,6 +176,10 @@ public class NetworkListener {
 
             devTools.addListener(Network.responseReceivedExtraInfo(), responseReceivedExtraInfoConsumer -> {
                 requestResponseStorage.addresponseReceivedExtraInfo(responseReceivedExtraInfoConsumer);
+            });
+
+            devTools.addListener(Network.loadingFinished(), loadingFinishedConsumer -> {
+                requestResponseStorage.addLoadingFinished(loadingFinishedConsumer);
             });
         }
     }
@@ -282,18 +290,20 @@ public class NetworkListener {
     private List<HarEntry> saveHarEntry(RequestResponsePair pair, String windowHandle){
         List<HarEntry> result = new ArrayList<>();
         List<Long> time = new ArrayList<>();
+        if (pair.getRequestOn() != null) {
+            time.add(pair.getRequestOn().getTime());
+        } else {
+            time.add(new Date().getTime());
+        }
         if (pair.getResponse() != null) {
-            pair.getResponse().getTiming().ifPresent(timing -> {
-                time.add(pair.getRequestOn().getTime());
-                time.add(timing.getReceiveHeadersEnd().longValue());
-            });
             result.add(createHarEntry(pair.getRequest(),
                     pair.getResponse(),
                     time,
                     windowHandle,
                     pair.getResponseBody(),
                     pair.getLoadingFailed(),
-                    pair.getResponseReceivedExtraInfo()));
+                    pair.getResponseReceivedExtraInfo(),
+                    pair.getLoadingFinished()));
         } else {
             result.add(createHarEntry(pair.getRequest(),
                     null,
@@ -301,7 +311,8 @@ public class NetworkListener {
                     windowHandle,
                     null,
                     pair.getLoadingFailed(),
-                    pair.getResponseReceivedExtraInfo()));
+                    pair.getResponseReceivedExtraInfo(),
+                    pair.getLoadingFinished()));
         }
         return result;
     }
@@ -349,9 +360,10 @@ public class NetworkListener {
                                    String pagref,
                                    String responseBody,
                                    LoadingFailed loadingFailed,
-                                   ResponseReceivedExtraInfo responseReceivedExtraInfo) {
+                                   ResponseReceivedExtraInfo responseReceivedExtraInfo,
+                                   LoadingFinished loadingFinished) {
         HarEntryConverter harEntry =
-                new HarEntryConverter(request, response,loadingFailed, responseReceivedExtraInfo, time, pagref, responseBody);
+                new HarEntryConverter(request, response,loadingFailed, responseReceivedExtraInfo, time, pagref, responseBody, loadingFinished);
         harEntry.setup();
         return harEntry.getHarEntry();
     }
