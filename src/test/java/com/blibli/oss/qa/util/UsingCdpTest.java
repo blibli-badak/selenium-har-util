@@ -35,7 +35,7 @@ public class UsingCdpTest  extends BaseTest{
         }else{
             System.out.println("Running Without headless mode");
         }
-        WebDriverManager.chromedriver().setup();
+        
     }
 
 

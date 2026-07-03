@@ -68,7 +68,7 @@ public class AppTestWithHarFilter {
         }else{
             System.out.println("Running Without headless mode");
         }
-        WebDriverManager.chromedriver().setup();
+        
     }
 
     @AfterEach

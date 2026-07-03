@@ -1,11 +1,11 @@
 package com.blibli.oss.qa.util.model;
 
 import lombok.Getter;
-import org.openqa.selenium.devtools.v137.network.model.LoadingFailed;
-import org.openqa.selenium.devtools.v137.network.model.Request;
-import org.openqa.selenium.devtools.v137.network.model.Response;
-import org.openqa.selenium.devtools.v137.network.model.ResponseReceivedExtraInfo;
-import org.openqa.selenium.devtools.v137.network.model.LoadingFinished;
+import org.openqa.selenium.devtools.v149.network.model.LoadingFailed;
+import org.openqa.selenium.devtools.v149.network.model.Request;
+import org.openqa.selenium.devtools.v149.network.model.Response;
+import org.openqa.selenium.devtools.v149.network.model.ResponseReceivedExtraInfo;
+import org.openqa.selenium.devtools.v149.network.model.LoadingFinished;
 
 import java.util.Collections;
 import java.util.Date;

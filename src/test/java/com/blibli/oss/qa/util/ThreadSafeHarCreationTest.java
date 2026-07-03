@@ -7,8 +7,8 @@ import de.sstoehr.harreader.HarReader;
 import de.sstoehr.harreader.model.Har;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.devtools.v137.network.model.Request;
-import org.openqa.selenium.devtools.v137.network.model.Response;
+import org.openqa.selenium.devtools.v149.network.model.Request;
+import org.openqa.selenium.devtools.v149.network.model.Response;
 
 import java.io.File;
 import java.lang.reflect.Field;

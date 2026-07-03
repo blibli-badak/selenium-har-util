@@ -85,7 +85,7 @@ public class AppTest {
         }else{
             System.out.println("Running Without headless mode");
         }
-        WebDriverManager.chromedriver().setup();
+        
     }
 
     @Test
