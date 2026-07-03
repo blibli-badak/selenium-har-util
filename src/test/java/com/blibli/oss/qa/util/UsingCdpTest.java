@@ -24,8 +24,7 @@ public class UsingCdpTest  extends BaseTest{
     private ChromeOptions options;
     private DesiredCapabilities capabilities;
 
-    public void setupLocalDriver(){
-        options = new ChromeOptions();
+    public void setupLocalDriver(){        setupChromeDriverBinary();        options = new ChromeOptions();
         options.addArguments("--no-sandbox");
         options.addArguments("--remote-allow-origins=*");
         options.addArguments("--disable-dev-shm-usage");

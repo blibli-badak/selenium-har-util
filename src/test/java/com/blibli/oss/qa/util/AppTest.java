@@ -50,6 +50,7 @@ public class AppTest {
 
     @BeforeEach
     public void setup() {
+        BaseTest.setupChromeDriverBinary();
         options = new ChromeOptions();
     }
 
