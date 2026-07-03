@@ -1,0 +1,31 @@
+src/test/java/com/blibli/oss/qa/util/AppTest.java
+  044290aa5f676888 53
+src/test/java/com/blibli/oss/qa/util/AppTestWithHarFilter.java
+  044290aa5f676888 46
+src/test/java/com/blibli/oss/qa/util/UnicodeTest.java
+  044290aa5f676888 25
+src/test/java/com/blibli/oss/qa/util/UsingCdpTest.java
+  044290aa5f676888 27
+src/test/java/com/blibli/oss/qa/util/BaseTest.java
+  044290aa5f676888 12-14,17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "a0579cf4b24d593216477b96b559383029c293f2",
+  "prompts": {
+    "044290aa5f676888": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "1845710e-b8de-43bc-aee1-0caed5673c3a",
+        "model": "copilot/auto"
+      },
+      "human_author": "Dwiki Nugraha <dwiki.nugraha@gdn-commerce.com>",
+      "messages": [],
+      "total_additions": 8,
+      "total_deletions": 9,
+      "accepted_lines": 8,
+      "overriden_lines": 0
+    }
+  }
+}
