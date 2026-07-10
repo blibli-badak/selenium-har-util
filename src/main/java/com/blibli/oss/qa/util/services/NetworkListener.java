@@ -16,6 +16,7 @@ import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chromium.ChromiumDriver;
 import org.openqa.selenium.devtools.DevTools;
+import org.openqa.selenium.devtools.DevToolsException;
 import org.openqa.selenium.devtools.HasDevTools;
 import org.openqa.selenium.devtools.v149.network.Network;
 import org.openqa.selenium.devtools.v149.network.model.*;
@@ -164,9 +165,24 @@ public class NetworkListener {
 
             devTools.addListener(Network.responseReceived(), responseConsumer -> {
                 Response response = responseConsumer.getResponse();
-                String responseBody =
-                    devTools.send(Network.getResponseBody(responseConsumer.getRequestId()))
-                        .getBody();
+                String responseBody = null;
+                try {
+                    responseBody =
+                        devTools.send(Network.getResponseBody(responseConsumer.getRequestId()))
+                            .getBody();
+                } catch (DevToolsException e) {
+                    // CDP error -32000 means the browser already discarded the response body
+                    // before we could fetch it. This is a known race condition for fast-completing
+                    // requests (e.g. tracking pixels, 204 No Content). The HAR entry is still
+                    // recorded; only the body will be null.
+                    if (e.getMessage() != null && e.getMessage().contains("-32000")) {
+                        log.debug("CDP body unavailable (response already discarded) for URL [{}]: {}",
+                            response.getUrl(), e.getMessage());
+                    } else {
+                        log.warn("Unexpected DevToolsException fetching response body for URL [{}]: {}",
+                            response.getUrl(), e.getMessage());
+                    }
+                }
                 requestResponseStorage.addResponse(response, responseBody);
             });
 
