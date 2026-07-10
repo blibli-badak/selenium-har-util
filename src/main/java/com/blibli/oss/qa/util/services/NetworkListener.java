@@ -336,9 +336,9 @@ public class NetworkListener {
     private void createFile(Har har) {
         ObjectMapper om = new ObjectMapper();
         try {
-            String json = new String(om.writeValueAsString(har).getBytes(), charset);
+            String json = om.writeValueAsString(har);
             // write json to file
-            Files.write(java.nio.file.Paths.get(harFile), json.getBytes());
+            Files.write(java.nio.file.Paths.get(harFile), json.getBytes(java.nio.charset.Charset.forName(charset)));
         } catch (IOException e) {
             e.printStackTrace();
         }
