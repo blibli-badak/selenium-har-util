@@ -1,8 +1,8 @@
 package com.blibli.oss.qa.util;
 
 
-import org.openqa.selenium.devtools.v149.network.model.ResponseReceived;
-import org.openqa.selenium.devtools.v149.network.Network;
+import org.openqa.selenium.devtools.v148.network.model.ResponseReceived;
+import org.openqa.selenium.devtools.v148.network.Network;
 
 public class ResponseModel {
     ResponseReceived responseReceived;
