@@ -22,6 +22,7 @@ public class UnicodeTest extends BaseTest {
 
     @BeforeEach
     public void setup() {
+        setupChromeDriverBinary();
         this.setupLocalDriver();
     }
     public void setupLocalDriver(){

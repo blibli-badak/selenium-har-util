@@ -50,6 +50,7 @@ public class AppTest {
 
     @BeforeEach
     public void setup() {
+        BaseTest.setupChromeDriverBinary();
         options = new ChromeOptions();
     }
 
@@ -96,6 +97,8 @@ public class AppTest {
         networkListener.start();
         driver.manage().window().maximize();
         driver.get("http://gosoft.web.id/selenium/");
+        WebDriverWait webDriverWait = new WebDriverWait(driver, Duration.ofSeconds(30));
+        webDriverWait.until(webDriver -> driver.findElement(By.id("new-tab")).isDisplayed());
         WebElement linkNewTab = driver.findElement(By.id("new-tab"));
         linkNewTab.click();
         ArrayList<String> tabs2 = new ArrayList<>(driver.getWindowHandles());
@@ -112,6 +115,8 @@ public class AppTest {
         networkListener = new NetworkListener(driver, "har-new-tab.har");
         networkListener.start(driver.getWindowHandle());
         driver.get("http://gosoft.web.id/selenium/");
+        WebDriverWait webDriverWait = new WebDriverWait(driver, Duration.ofSeconds(30));
+        webDriverWait.until(webDriver -> driver.findElement(By.id("new-tab")).isDisplayed());
         WebElement linkNewTab = driver.findElement(By.id("new-tab"));
         linkNewTab.click();
         ArrayList<String> tabs2 = new ArrayList<>(driver.getWindowHandles());

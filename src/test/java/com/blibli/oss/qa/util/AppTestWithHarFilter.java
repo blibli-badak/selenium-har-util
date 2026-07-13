@@ -43,6 +43,7 @@ public class AppTestWithHarFilter {
 
     @BeforeEach
     public void setup() {
+        BaseTest.setupChromeDriverBinary();
         options = new ChromeOptions();
     }
 
